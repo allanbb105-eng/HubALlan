@@ -16,7 +16,6 @@ repeat wait() until game.Players.LocalPlayer.Character
 -- ✅ EXECUTA FUNÇÕES APÓS TUDO ESTAR PRONTO
 task.delay(3, function()
     if CheckQuest then pcall(CheckQuest) end
-    if _G.AutoHop and Hop then pcall(Hop) end
 end)
 
 -- ✅ SCRIPT ORIGINAL AQUI
