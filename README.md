@@ -25,13 +25,16 @@ end
 _G.Remove_Effect = true  -- Se for 'true', o script tentará remover o efeito de "morte" (tela escura/cinza).
                          -- Isso é útil para visibilidade e para evitar bugs visuais.
 
-_G.AutoFarm = false      -- A principal flag para ligar/desligar o ciclo de auto-farm.
+_G.AutoFarm = true       -- <--- DEFINIDO COMO TRUE POR PADRÃO
+                         -- A principal flag para ligar/desligar o ciclo de auto-farm.
                          -- 'true' = farm ativo, 'false' = farm inativo.
 
-_G.AutoQuest = true      -- Controla se o script deve automaticamente pegar e entregar quests.
+_G.AutoQuest = true      -- <--- DEFINIDO COMO TRUE POR PADRÃO
+                         -- Controla se o script deve automaticamente pegar e entregar quests.
                          -- 'true' = tenta pegar quests, 'false' = apenas farma mobs sem quest.
 
-_G.AutoAttack = true     -- Controla se o script deve atacar os monstros.
+_G.AutoAttack = true     -- <--- DEFINIDO COMO TRUE POR PADRÃO
+                         -- Controla se o script deve atacar os monstros.
                          -- 'true' = ataca mobs, 'false' = não ataca (útil para debug ou outros usos).
 
 _G.TargetMob = nil       -- Uma variável para armazenar uma referência ao monstro que está sendo alvo no momento.
@@ -220,11 +223,11 @@ function CheckQuest()
             -- **IMPORTANTE: VOCÊ PRECISA OBTER AS CFRAMES CORRETAS AQUI!**
             -- Use seu executor para obter as coordenadas do NPC da quest e da área dos mobs.
             questData = {
-                Mon = "NomeDoMobNivel20",           -- EX: "Jungle Pirate", "Marine"
+                Mon = "Jungle Pirate",           -- EX: "Jungle Pirate", "Marine"
                 LevelQuest = 20,
-                NameQuest = "QuestNivel20",
-                NameMon = "NomeDoMobNivel20",
-                NPCName = "NomeDoNPCNivel20",      -- EX: "Jungle Pirate Quest Giver"
+                NameQuest = "Jungle Pirate Quest",
+                NameMon = "Jungle Pirate",
+                NPCName = "Jungle Pirate Quest Giver",      -- EX: "Jungle Pirate Quest Giver"
                 CFrameQuest = CFrame.new(0,0,0), -- <<<<<<<<<<<<<<< SUBSTITUA ESTA CFrame PELA DO NPC
                 CFrameMon = CFrame.new(0,0,0)    -- <<<<<<<<<<<<<<< SUBSTITUA ESTA CFrame PELA DO LOCAL DE SPAWN DOS MOBS
             }
@@ -234,15 +237,14 @@ function CheckQuest()
     elseif World2 then
         if MyLevel >= 700 and MyLevel <= 749 then
             questData = {
-                Mon = "NomeDoMobNivel700",
+                Mon = "Marine Captain", -- Exemplo
                 LevelQuest = 700,
-                NameQuest = "QuestNivel700",
-                NameMon = "NomeDoMobNivel700",
-                NPCName = "NomeDoNPCNivel700",
+                NameQuest = "Marine Captain Quest",
+                NameMon = "Marine Captain",
+                NPCName = "Marine Captain Quest Giver",
                 CFrameQuest = CFrame.new(0,0,0), -- <<<<<<<<<<<<<<< SUBSTITUA ESTA CFrame
                 CFrameMon = CFrame.new(0,0,0) -- <<<<<<<<<<<<<<< SUBSTITUA ESTA CFrame
             }
-        -- [[ ADICIONE MAIS BLOCOS 'elseif' PARA OUTRAS QUESTS EM WORLD2 AQUI ]]
         end
     -- Lógica para o Terceiro Mar (World3)
     elseif World3 then
@@ -689,4 +691,8 @@ ExitButton.MouseButton1Click:Connect(function()
 end)
 
 -- Inicializa o status na GUI quando o script é carregado
-updateStatusText("Status: Inativo")
+-- e já inicia o auto-farm se _G.AutoFarm for true por padrão.
+updateStatusText("Status: Ativo (Iniciando...)")
+if _G.AutoFarm then
+    StartAutoFarm()
+end
