@@ -394,3 +394,125 @@ warn("   _G.AutoAttack = true/false (Ativar/desativar ataque automático)")
 -- _G.AutoQuest = true
 -- _G.AutoAttack = true
 -- spawn(StartAutoFarm)
+-- --- INTERFACE GRÁFICA (GUI) ---
+
+local player = game:GetService("Players").LocalPlayer
+local guiService = game:GetService("GuiService")
+local coreGui = game:GetService("CoreGui") -- Geralmente o local para criar GUIs em exploits
+
+-- Cria a ScreenGui
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "AutoFarmGUI"
+ScreenGui.Parent = coreGui -- Ou player:WaitForChild("PlayerGui") se o executor permitir
+
+-- Cria o Frame principal
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Size = UDim2.new(0, 200, 0, 150) -- Largura, Altura
+MainFrame.Position = UDim2.new(0.5, -100, 0.5, -75) -- Centraliza na tela
+MainFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+MainFrame.BorderSizePixel = 0
+MainFrame.Draggable = true -- Permite arrastar o frame
+MainFrame.Parent = ScreenGui
+
+-- Título
+local TitleLabel = Instance.new("TextLabel")
+TitleLabel.Name = "TitleLabel"
+TitleLabel.Size = UDim2.new(1, 0, 0, 30)
+TitleLabel.Position = UDim2.new(0, 0, 0, 0)
+TitleLabel.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+TitleLabel.Text = "Auto Farm by Gemini"
+TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+TitleLabel.Font = Enum.Font.SourceSansBold
+TitleLabel.TextSize = 18
+TitleLabel.BorderSizePixel = 0
+TitleLabel.Parent = MainFrame
+
+-- Status Label
+local StatusLabel = Instance.new("TextLabel")
+StatusLabel.Name = "StatusLabel"
+StatusLabel.Size = UDim2.new(1, 0, 0, 20)
+StatusLabel.Position = UDim2.new(0, 0, 0, 30)
+StatusLabel.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+StatusLabel.Text = "Status: Inativo"
+StatusLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+StatusLabel.Font = Enum.Font.SourceSans
+StatusLabel.TextSize = 14
+StatusLabel.BorderSizePixel = 0
+StatusLabel.Parent = MainFrame
+
+local function updateStatusText(text)
+    StatusLabel.Text = text
+end
+
+-- Função para atualizar o texto e a cor dos botões toggle
+local function updateToggleButton(button, value)
+    if value then
+        button.Text = button.Name .. ": ON"
+        button.BackgroundColor3 = Color3.fromRGB(70, 150, 70) -- Verde
+    else
+        button.Text = button.Name .. ": OFF"
+        button.BackgroundColor3 = Color3.fromRGB(150, 70, 70) -- Vermelho
+    end
+end
+
+-- Botão Toggle Auto Farm
+local AutoFarmButton = Instance.new("TextButton")
+AutoFarmButton.Name = "AutoFarm"
+AutoFarmButton.Size = UDim2.new(0.9, 0, 0, 30)
+AutoFarmButton.Position = UDim2.new(0.05, 0, 0, 60)
+AutoFarmButton.Font = Enum.Font.SourceSansBold
+AutoFarmButton.TextSize = 16
+AutoFarmButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+AutoFarmButton.BorderSizePixel = 0
+AutoFarmButton.Parent = MainFrame
+updateToggleButton(AutoFarmButton, _G.AutoFarm)
+
+AutoFarmButton.MouseButton1Click:Connect(function()
+    _G.AutoFarm = not _G.AutoFarm
+    updateToggleButton(AutoFarmButton, _G.AutoFarm)
+    if _G.AutoFarm then
+        StartAutoFarm()
+    else
+        StopAutoFarm()
+    end
+end)
+
+-- Botão Toggle Auto Quest
+local AutoQuestButton = Instance.new("TextButton")
+AutoQuestButton.Name = "AutoQuest"
+AutoQuestButton.Size = UDim2.new(0.9, 0, 0, 30)
+AutoQuestButton.Position = UDim2.new(0.05, 0, 0, 95)
+AutoQuestButton.Font = Enum.Font.SourceSansBold
+AutoQuestButton.TextSize = 16
+AutoQuestButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+AutoQuestButton.BorderSizePixel = 0
+AutoQuestButton.Parent = MainFrame
+updateToggleButton(AutoQuestButton, _G.AutoQuest)
+
+AutoQuestButton.MouseButton1Click:Connect(function()
+    _G.AutoQuest = not _G.AutoQuest
+    updateToggleButton(AutoQuestButton, _G.AutoQuest)
+    print("AutoQuest agora está: " .. tostring(_G.AutoQuest))
+end)
+
+-- Botão Toggle Auto Attack
+local AutoAttackButton = Instance.new("TextButton")
+AutoAttackButton.Name = "AutoAttack"
+AutoAttackButton.Size = UDim2.new(0.9, 0, 0, 15) -- Tamanho menor para caber
+AutoAttackButton.Position = UDim2.new(0.05, 0, 0, 130)
+AutoAttackButton.Font = Enum.Font.SourceSansBold
+AutoAttackButton.TextSize = 12
+AutoAttackButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+AutoAttackButton.BorderSizePixel = 0
+AutoAttackButton.Parent = MainFrame
+updateToggleButton(AutoAttackButton, _G.AutoAttack)
+
+AutoAttackButton.MouseButton1Click:Connect(function()
+    _G.AutoAttack = not _G.AutoAttack
+    updateToggleButton(AutoAttackButton, _G.AutoAttack)
+    print("AutoAttack agora está: " .. tostring(_G.AutoAttack))
+end)
+
+-- Inicializa o status na GUI
+updateStatusText("Status: Inativo")
