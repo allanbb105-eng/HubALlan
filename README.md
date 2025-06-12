@@ -1,3 +1,22 @@
+-- Ativa configurações globais
+_G.AutoFarm = true
+IslandESP = true
+ESPPlayer = true
+ChestESP = true
+DevilFruitESP = true
+FlowerESP = true
+RealFruitESP = true
+
+-- Espera o jogo carregar completamente
+repeat wait() until game:IsLoaded()
+repeat wait() until game.Players.LocalPlayer
+repeat wait() until game.Players.LocalPlayer.Character
+
+-- Executa funções principais só depois de tudo estar carregado
+task.delay(3, function()
+    if CheckQuest then pcall(CheckQuest) end
+    if Hop then pcall(Hop) end
+end)
 -- ✅ CONFIGURACOES GLOBAIS NECESSARIAS
 _G.AutoFarm = true
 IslandESP = true
