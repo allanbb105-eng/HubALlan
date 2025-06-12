@@ -1,4 +1,4 @@
--- Ativa configurações globais
+-- ✅ CONFIGURAÇÕES GLOBAIS NECESSÁRIAS
 _G.AutoFarm = true
 IslandESP = true
 ESPPlayer = true
@@ -7,32 +7,19 @@ DevilFruitESP = true
 FlowerESP = true
 RealFruitESP = true
 
--- Espera o jogo carregar completamente
+-- ✅ ESPERA O JOGO CARREGAR E EXECUTA AS FUNÇÕES PRINCIPAIS
 repeat wait() until game:IsLoaded()
 repeat wait() until game.Players.LocalPlayer
 repeat wait() until game.Players.LocalPlayer.Character
 
--- Executa funções principais só depois de tudo estar carregado
+-- ✅ EXECUTA FUNÇÕES APÓS TUDO ESTAR PRONTO
 task.delay(3, function()
     if CheckQuest then pcall(CheckQuest) end
     if Hop then pcall(Hop) end
 end)
--- ✅ CONFIGURACOES GLOBAIS NECESSARIAS
-_G.AutoFarm = true
-IslandESP = true
-ESPPlayer = true
-ChestESP = true
-DevilFruitESP = true
-FlowerESP = true
-RealFruitESP = true
 
--- ✅ EXECUTA FUNCOES PRINCIPAIS AUTOMATICAMENTE
-pcall(function()
-    if CheckQuest then CheckQuest() end
-    if Hop then Hop() end
-end)
+-- ✅ SCRIPT ORIGINAL AQUI
 
--- ✅ SCRIPT ORIGINAL AQUI (código original do Allan Hub)
 
 if game.PlaceId == 2753915549 then
     World1 = true
@@ -52,8 +39,7 @@ function CheckQuest()
             LevelQuest = 1
             NameQuest = "BanditQuest1"
             NameMon = "Bandit"
-            CFrameQuest = CFrame.new(1059.37, 15.44, 1550.42)
-             CFrameQuest = CFrame.new(1059.37195, 15.4495068, 1550.4231, 0.939700544, -0, -0.341998369, 0, 1, -0, 0.341998369, 0, 0.939700544)
+            CFrameQuest = CFrame.new(1059.37195, 15.4495068, 1550.4231, 0.939700544, -0, -0.341998369, 0, 1, -0, 0.341998369, 0, 0.939700544)
             CFrameMon = CFrame.new(1045.962646484375, 27.00250816345215, 1560.8203125)
         elseif MyLevel == 10 or MyLevel <= 14 then
             Mon = "Monkey"
@@ -11404,3 +11390,4 @@ OrionLib:MakeNotification({
     Content = "Loading Config Complete!!",
     Image = "rbxassetid://119980140458596",
     Time = 5
+})
