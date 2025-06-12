@@ -143,7 +143,7 @@ function AttackTarget(target)
             AttackRemote:FireServer(target.HumanoidRootPart) -- Outros argumentos comuns
             print("[Attack] Tentativa via 'Events.Attack'.") -- Depuração
             attackSucceeded = true
-            wait(0.2)
+        wait(0.2)
         end
     end
 
@@ -414,7 +414,7 @@ local function StartAutoClick()
         print("[AutoClickThread] Thread de Auto Click iniciada.") -- Depuração
         local mouse = game:GetService("Players").LocalPlayer:GetService("Mouse")
         while _G.AutoClick do
-            -- print("[AutoClickThread] Clicando...") -- CUIDADO: pode gerar muitos logs
+            -- print("[AutoClickThread] Clicando...") -- CUIDADO: pode gerar muitos logs se descomentado
             mouse.Button1Down:fire()
             wait(_G.AutoClickDelay)
             mouse.Button1Up:fire()
@@ -554,8 +554,8 @@ ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 250, 0, 420) -- Aumentado para acomodar mais botões e o auto click
-MainFrame.Position = UDim2.new(0.5, -125, 0.5, -210) -- Centraliza o frame
+MainFrame.Size = UDim2.new(0, 250, 0, 480) -- Aumentado para acomodar mais botões e o auto click
+MainFrame.Position = UDim2.new(0.5, -125, 0.5, -240) -- Centraliza o frame (metade da nova altura)
 MainFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 MainFrame.BorderSizePixel = 0
 MainFrame.Draggable = true
@@ -659,11 +659,11 @@ LevelFarmLabel.Parent = MainFrame
 -- ScrollFrame para os botões de níveis
 local LevelButtonsFrame = Instance.new("ScrollingFrame")
 LevelButtonsFrame.Name = "LevelButtonsFrame"
-LevelButtonsFrame.Size = UDim2.new(1, 0, 0.4, 0) -- Ajustado para caber o AutoClick
+LevelButtonsFrame.Size = UDim2.new(1, 0, 0, 180) -- Altura FIXA maior para garantir que os botões apareçam
 LevelButtonsFrame.Position = UDim2.new(0, 0, 0, 148) -- Abaixo do título de Level Farm
 LevelButtonsFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 LevelButtonsFrame.BorderSizePixel = 0
-LevelButtonsFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+LevelButtonsFrame.CanvasSize = UDim2.new(0, 0, 0, 0) -- Será ajustado dinamicamente
 LevelButtonsFrame.VerticalScrollBarInset = Enum.ScrollBarInset.Always
 LevelButtonsFrame.ScrollingDirection = Enum.ScrollingDirection.Y
 LevelButtonsFrame.Parent = MainFrame
@@ -677,6 +677,7 @@ UIListLayout.Parent = LevelButtonsFrame
 
 -- Função para criar um botão de quest dinamicamente
 local function createQuestButton(questName, questData)
+    print("[createQuestButton] Tentando criar botão para: " .. questData.FarmName) -- ADICIONADO PARA DEPURAR
     local button = Instance.new("TextButton")
     button.Name = questData.FarmName or questName .. "FarmButton"
     button.Size = UDim2.new(0.9, 0, 0, 30)
@@ -705,7 +706,7 @@ local function createQuestButton(questName, questData)
 end
 
 -- Adiciona os botões de quest dinamicamente
-local currentYOffset = 0
+local currentYOffsetForCanvas = 0 -- Variável para calcular a altura do CanvasSize
 local buttonHeight = 30
 local padding = 5
 
@@ -740,16 +741,17 @@ for questName, questData in pairs(QuestDefinitions) do
         -- E que terminam até 50 níveis abaixo do seu nível atual
         if not (questData.MinLevel > playerLevel + 50 or questData.MaxLevel < playerLevel - 50) then
              createQuestButton(questName, questData)
-             currentYOffset = currentYOffset + buttonHeight + padding
+             currentYOffsetForCanvas = currentYOffsetForCanvas + buttonHeight + padding
         else
              print("Botão " .. questData.FarmName .. " filtrado (nível " .. playerLevel .. ") - Min:" .. questData.MinLevel .. " Max:" .. questData.MaxLevel)
         end
     elseif shouldDisplay and playerLevel == 0 then -- Se o nível não foi lido, mostre todas do mar correto (fallback)
         createQuestButton(questName, questData)
-        currentYOffset = currentYOffset + buttonHeight + padding
+        currentYOffsetForCanvas = currentYOffsetForCanvas + buttonHeight + padding
     end
 end
-LevelButtonsFrame.CanvasSize = UDim2.new(0, 0, 0, currentYOffset)
+-- Define o CanvasSize com base na altura total dos botões criados
+LevelButtonsFrame.CanvasSize = UDim2.new(0, 0, 0, currentYOffsetForCanvas)
 
 
 -- Separador visual para Auto Click
@@ -841,11 +843,11 @@ SliderButton.Changed:Connect(function(property)
 end)
 
 
--- Botão STOP ALL FARM
+-- Ajustar a posição do botão STOP ALL FARM para o final da MainFrame com a nova altura
 local StopAllFarmButton = Instance.new("TextButton")
 StopAllFarmButton.Name = "Stop All Farm"
 StopAllFarmButton.Size = UDim2.new(0.9, 0, 0, 30)
-StopAllFarmButton.Position = UDim2.new(0.05, 0, 0, MainFrame.Size.Y.Offset - 35) -- Posiciona no final do frame
+StopAllFarmButton.Position = UDim2.new(0.05, 0, 0, MainFrame.Size.Y.Offset - 75) -- Ajustado
 StopAllFarmButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50) -- Vermelho vibrante
 StopAllFarmButton.Text = "STOP ALL FARM"
 StopAllFarmButton.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -865,7 +867,7 @@ end)
 local HideShowButton = Instance.new("TextButton")
 HideShowButton.Name = "Hide/Show"
 HideShowButton.Size = UDim2.new(0.4, 0, 0, 15)
-HideShowButton.Position = UDim2.new(0.05, 0, 0, MainFrame.Size.Y.Offset - 15) -- Abaixo do StopAllFarmButton
+HideShowButton.Position = UDim2.new(0.05, 0, 0, MainFrame.Size.Y.Offset - 35) -- Ajustado
 HideShowButton.Font = Enum.Font.SourceSans
 HideShowButton.TextSize = 12
 HideShowButton.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -888,7 +890,7 @@ end)
 local ExitButton = Instance.new("TextButton")
 ExitButton.Name = "Exit"
 ExitButton.Size = UDim2.new(0.4, 0, 0, 15)
-ExitButton.Position = UDim2.new(0.55, 0, 0, MainFrame.Size.Y.Offset - 15)
+ExitButton.Position = UDim2.new(0.55, 0, 0, MainFrame.Size.Y.Offset - 35) -- Ajustado
 ExitButton.Font = Enum.Font.SourceSans
 ExitButton.TextSize = 12
 ExitButton.TextColor3 = Color3.fromRGB(255, 255, 255)
