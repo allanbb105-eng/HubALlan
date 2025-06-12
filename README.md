@@ -1,12 +1,3 @@
---[[
-
-    Kaitun or Cuttay, a phrase of a Roblox script that fully autofarms everything in Blox Fruits (game)
-    "Ơ! Thằng lồn này dùng cuttay à? Mới chơi có (1) tuần mà đã giàu như này rồi?"
-
-    Binh Hub Kaitun (catn1qqer)
-    Project started on 13/5/2023
-
-]]
 
 _G.Team = "Pirates" -- "Marines"
 _G.FPSBoost = false -- really fucked up the client but the good side is fps go wroom.
