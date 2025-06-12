@@ -5,39 +5,42 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TeleportService = game:GetService("TeleportService")
 local RunService = game:GetService("RunService")
 
--- Adiciona "Allan Hub" na interface, conforme solicitado anteriormente.
--- Isso cria uma ScreenGui e um TextLabel para exibir o nome do script.
-local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "AllanHubScriptUI"
-ScreenGui.Parent = PlayerGui
+-- Adiciona "Allan Hub" na interface do usuário (UI) do jogo.
+-- Isso cria uma ScreenGui (um contêiner para elementos de UI na tela)
+-- e um TextLabel (um elemento de texto) dentro dela para exibir o nome "Allan Hub".
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui") -- Acessa a GUI do jogador
+local ScreenGui = Instance.new("ScreenGui") -- Cria uma nova ScreenGui
+ScreenGui.Name = "AllanHubScriptUI" -- Define um nome para a ScreenGui
+ScreenGui.Parent = PlayerGui -- Adiciona a ScreenGui à GUI do jogador
 
-local TextLabel = Instance.new("TextLabel")
-TextLabel.Size = UDim2.new(0.2, 0, 0.05, 0)
-TextLabel.Position = UDim2.new(0.01, 0, 0.01, 0)
-TextLabel.BackgroundTransparency = 1
-TextLabel.TextColor3 = Color3.new(1, 1, 1)
-TextLabel.Font = Enum.Font.SourceSansBold
-TextLabel.TextSize = 24
-TextLabel.Text = "Allan Hub"
-TextLabel.Parent = ScreenGui
+local TextLabel = Instance.new("TextLabel") -- Cria um novo TextLabel
+TextLabel.Size = UDim2.new(0.2, 0, 0.05, 0) -- Define o tamanho do TextLabel (20% da largura da tela, 5% da altura)
+TextLabel.Position = UDim2.new(0.01, 0, 0.01, 0) -- Define a posição (canto superior esquerdo, com uma pequena margem)
+TextLabel.BackgroundTransparency = 1 -- Torna o fundo do TextLabel transparente
+TextLabel.TextColor3 = Color3.new(1, 1, 1) -- Define a cor do texto como branco
+TextLabel.Font = Enum.Font.SourceSansBold -- Define a fonte do texto
+TextLabel.TextSize = 24 -- Define o tamanho da fonte
+TextLabel.Text = "Allan Hub" -- Define o texto a ser exibido
+TextLabel.Parent = ScreenGui -- Adiciona o TextLabel à ScreenGui
 
 
 -- Variáveis globais (usadas com _G para serem acessíveis de qualquer lugar no script)
-_G.AutoFarm = false -- Controla se o auto-farm está ativo
-_G.Mob = nil        -- Nome do mob alvo para o farm
-_G.AutoQuest = false -- Controla se o auto-quest está ativo
-_G.Teleport = false -- Controla se o teleporte está ativo
-_G.KillAura = false -- Controla se o Kill Aura está ativo
-_G.AntiLag = false  -- Controla se o anti-lag está ativo
-_G.Remove_Effect = true -- Controla se os efeitos visuais são removidos
+_G.AutoFarm = false -- Controla se o auto-farm está ativo.
+_G.Mob = nil        -- Armazena o nome do mob alvo para o farm.
+_G.AutoQuest = false -- Controla se o auto-quest está ativo.
+_G.Teleport = false -- Controla se o teleporte automático está ativo.
+_G.KillAura = false -- Controla se o Kill Aura (ataque automático a inimigos próximos) está ativo.
+_G.AntiLag = false  -- Controla se as otimizações anti-lag estão ativas (não implementado neste script).
+_G.Remove_Effect = true -- Controla se efeitos visuais específicos são removidos.
 
--- Variáveis para identificar o mundo atual com base no PlaceId (ID do jogo/servidor)
+-- Variáveis para identificar o mundo atual com base no PlaceId (ID do jogo/servidor).
+-- Isso é comum em jogos com múltiplos mapas ou "mundos".
 local World1 = false
 local World2 = false
 local World3 = false
 
--- Verifica o PlaceId do jogo e define a variável de mundo correspondente
+-- Verifica o PlaceId do jogo e define qual variável de mundo é verdadeira.
+-- Se o PlaceId não corresponder a nenhum mundo conhecido, o jogador é kickado.
 if game.PlaceId == 2753915549 then
     World1 = true
 elseif game.PlaceId == 4442272183 then
@@ -45,16 +48,17 @@ elseif game.PlaceId == 4442272183 then
 elseif game.PlaceId == 7449423635 then
     World3 = true
 else
-    -- Se o PlaceId não for reconhecido, o jogador é kickado do servidor
     game:GetService("Players").LocalPlayer:Kick("Do not Support, Please wait...")
 end
 
--- Função para verificar a quest atual e definir o mob alvo e localização
+-- Função para verificar a quest atual do jogador e definir o mob alvo,
+-- o nível da quest, o nome da quest e as coordenadas de teleporte (CFrame)
+-- para a quest e para o mob.
 function CheckQuest()
-    MyLevel = LocalPlayer.Data.Level.Value -- Pega o nível do jogador
+    MyLevel = LocalPlayer.Data.Level.Value -- Obtém o nível atual do jogador.
 
     if World1 then
-        -- Lógica de quests para o Mundo 1
+        -- Lógica de quests e mobs para o Mundo 1, baseada no nível do jogador.
         if MyLevel >= 1 and MyLevel <= 9 then
             Mon = "Bandit"
             LevelQuest = 1
@@ -197,7 +201,7 @@ function CheckQuest()
             CFrameMon = CFrame.new(1553.86474609375, 27.00250816345215, 1696.082763671875)
         end
     elseif World2 then
-        -- Lógica de quests para o Mundo 2 (similar ao Mundo 1, mas com diferentes mobs e CFrames)
+        -- Lógica de quests e mobs para o Mundo 2.
         if MyLevel >= 700 and MyLevel <= 749 then
             Mon = "Dark_Step"
             LevelQuest = 700
@@ -305,7 +309,7 @@ function CheckQuest()
             CFrameMon = CFrame.new(-1046.037109375, 411.00250244140625, 359.8824157714844)
         end
     elseif World3 then
-        -- Lógica de quests para o Mundo 3 (similar aos anteriores, com diferentes mobs e CFrames)
+        -- Lógica de quests e mobs para o Mundo 3.
         if MyLevel >= 1500 and MyLevel <= 1549 then
             Mon = "Luffy"
             LevelQuest = 1500
@@ -339,9 +343,8 @@ function CheckQuest()
             LevelQuest = 1700
             NameQuest = "DoflamingoQuest"
             NameMon = "Doflamingo"
-            CFrameQuest = CFrame.new(7700.73047, 509.309021, -3878.07764, -0.587785244, -0, 0.809017003, 0, 1, -0, -0.809017003, 0, -0.587785244)
-            CFrameMon = CFrame.new(7704.91259765625, 517.0025024414062, -3884.2255859375)
-        elseif MyLevel >= 1750 and MyLevel <= 1799 then
+            CFrameQuest = CFrame.new(7700.73047, 509.309021, -3878.0776
+            elseif MyLevel >= 1750 and MyLevel <= 1799 then
             Mon = "Kaido"
             LevelQuest = 1750
             NameQuest = "KaidoQuest"
@@ -353,4 +356,188 @@ function CheckQuest()
             LevelQuest = 1800
             NameQuest = "Big_MomQuest"
             NameMon = "Big_Mom"
-            CFrameQuest = CFrame.new(7700.73047, 509.309
+            CFrameQuest = CFrame.new(7700.73047, 509.309021, -3878.07764, -0.587785244, -0, 0.809017003, 0, 1, -0, -0.809017003, 0, -0.587785244)
+            CFrameMon = CFrame.new(7704.91259765625, 517.0025024414062, -3884.2255859375)
+        elseif MyLevel >= 1850 and MyLevel <= 1899 then
+            Mon = "Shanks"
+            LevelQuest = 1850
+            NameQuest = "ShanksQuest"
+            NameMon = "Shanks"
+            CFrameQuest = CFrame.new(7700.73047, 509.309021, -3878.07764, -0.587785244, -0, 0.809017003, 0, 1, -0, -0.809017003, 0, -0.587785244)
+            CFrameMon = CFrame.new(7704.91259765625, 517.0025024414062, -3884.2255859375)
+        elseif MyLevel >= 1900 and MyLevel <= 1949 then
+            Mon = "Mihawk"
+            LevelQuest = 1900
+            NameQuest = "MihawkQuest"
+            NameMon = "Mihawk"
+            CFrameQuest = CFrame.new(7700.73047, 509.309021, -3878.07764, -0.587785244, -0, 0.809017003, 0, 1, -0, -0.809017003, 0, -0.587785244)
+            CFrameMon = CFrame.new(7704.91259765625, 517.0025024414062, -3884.2255859375)
+        elseif MyLevel >= 1950 and MyLevel <= 1999 then
+            Mon = "Marco"
+            LevelQuest = 1950
+            NameQuest = "MarcoQuest"
+            NameMon = "Marco"
+            CFrameQuest = CFrame.new(7700.73047, 509.309021, -3878.07764, -0.587785244, -0, 0.809017003, 0, 1, -0, -0.809017003, 0, -0.587785244)
+            CFrameMon = CFrame.new(7704.91259765625, 517.0025024414062, -3884.2255859375)
+        elseif MyLevel >= 2000 and MyLevel <= 2049 then
+            Mon = "Black_Beard"
+            LevelQuest = 2000
+            NameQuest = "Black_BeardQuest"
+            NameMon = "Black_Beard"
+            CFrameQuest = CFrame.new(7700.73047, 509.309021, -3878.07764, -0.587785244, -0, 0.809017003, 0, 1, -0, -0.809017003, 0, -0.587785244)
+            CFrameMon = CFrame.new(7704.91259765625, 517.0025024414062, -3884.2255859375)
+        elseif MyLevel >= 2050 and MyLevel <= 2099 then
+            Mon = "Admirals"
+            LevelQuest = 2050
+            NameQuest = "AdmiralsQuest"
+            NameMon = "Admirals"
+            CFrameQuest = CFrame.new(7700.73047, 509.309021, -3878.07764, -0.587785244, -0, 0.809017003, 0, 1, -0, -0.809017003, 0, -0.587785244)
+            CFrameMon = CFrame.new(7704.91259765625, 517.0025024414062, -3884.2255859375)
+        elseif MyLevel >= 2100 and MyLevel <= 2149 then
+            Mon = "Whitebeard"
+            LevelQuest = 2100
+            NameQuest = "WhitebeardQuest"
+            NameMon = "Whitebeard"
+            CFrameQuest = CFrame.new(7700.73047, 509.309021, -3878.07764, -0.587785244, -0, 0.809017003, 0, 1, -0, -0.809017003, 0, -0.587785244)
+            CFrameMon = CFrame.new(7704.91259765625, 517.0025024414062, -3884.2255859375)
+        elseif MyLevel >= 2150 then
+            Mon = "Red_Dragon"
+            LevelQuest = 2150
+            NameQuest = "Red_DragonQuest"
+               NameMon = "Red_Dragon"
+            CFrameQuest = CFrame.new(7700.73047, 509.309021, -3878.07764, -0.587785244, -0, 0.809017003, 0, 1, -0, -0.809017003, 0, -0.587785244)
+            CFrameMon = CFrame.new(7704.91259765625, 517.0025024414062, -3884.2255859375)
+        end
+    end
+
+    _G.Mob = Mon -- Atribui o nome do mob alvo à variável global.
+end
+
+-- Função para aceitar/completar a quest chamando um evento remoto no servidor.
+function AcceptQuest()
+    spawn(function() -- Usa spawn para não bloquear o script principal.
+        ReplicatedStorage.Remotes.Quest:InvokeServer(NameQuest, LevelQuest) -- Invoca o evento de quest.
+        wait(0.5) -- Espera um curto período para a ação ser processada.
+    end)
+end
+
+-- Função para teleportar o personagem do jogador para a localização da quest.
+function GoToQuest()
+    LocalPlayer.Character.HumanoidRootPart.CFrame = CFrameQuest -- Define a posição do jogador.
+    wait(0.5)
+end
+
+-- Função para farmar o mob. Isso envolve teleportar para o mob e atacá-lo repetidamente.
+function FarmMob()
+    spawn(function()
+        local Mob = game:GetService("Workspace").NPCs:FindFirstChild(Mon) -- Tenta encontrar o mob no mundo do jogo.
+        while Mob and _G.AutoFarm do -- Continua farmando enquanto o mob existe e o auto-farm está ativado.
+            -- Teleporta para perto do mob para iniciar o ataque.
+            LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(Mob.HumanoidRootPart.Position + Vector3.new(0, 0, 5))
+            -- Teleporta diretamente para a posição do mob.
+            LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(Mob.HumanoidRootPart.Position)
+            ReplicatedStorage.Remotes.Attack:InvokeServer(Mob) -- Invoca o evento de ataque no servidor.
+            wait() -- Espera um pequeno momento para o próximo ataque.
+        end
+    end)
+end
+
+-- Função para teleportar o jogador para a localização do mob alvo continuamente.
+function TeleportMob()
+    spawn(function()
+        while _G.Teleport do -- Loop contínuo enquanto a função de teleporte está ativa.
+            wait()
+            local Mob = game:GetService("Workspace").NPCs:FindFirstChild(_G.Mob) -- Encontra o mob alvo.
+            if Mob and Mob.HumanoidRootPart then
+                -- Teleporta o jogador para uma posição ligeiramente acima do mob.
+                LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(Mob.HumanoidRootPart.Position + Vector3.new(0, 5, 0))
+            end
+        end
+    end)
+end
+
+-- Função Kill Aura: Ataca todos os mobs próximos do tipo "_G.Mob".
+function KillAura()
+    spawn(function()
+        while _G.KillAura do -- Loop contínuo enquanto o Kill Aura está ativado.
+            wait()
+            for i, v in pairs(game:GetService("Workspace").NPCs:GetChildren()) do -- Itera sobre todos os NPCs no jogo.
+                -- Verifica se o NPC é o mob alvo, tem um Humanoid e está vivo.
+                if v.Name == _G.Mob and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 and v.HumanoidRootPart then
+                    ReplicatedStorage.Remotes.Attack:InvokeServer(v) -- Invoca o evento de ataque contra o mob.
+                end
+            end
+        end
+    end)
+end
+
+-- Função AntiLag: Placeholder para funcionalidades de redução de lag.
+-- O script original não contém uma implementação real para esta função.
+function AntiLag()
+    spawn(function()
+        while _G.AntiLag do
+            wait()
+            -- A lógica para reduzir o lag iria aqui.
+            -- Por exemplo, desabilitar partículas, efeitos visuais, etc.
+        end
+    end)
+end
+
+-- Função Hop: Teleporta o jogador para o mesmo PlaceId, mas geralmente para um servidor diferente.
+-- Usado para evitar banimento ou encontrar novos servidores.
+function Hop()
+    TeleportService:Teleport(game.PlaceId, LocalPlayer) -- Tenta teleportar o jogador para o mesmo jogo.
+end
+
+-- Loop principal para o auto-quest e auto-farm.
+-- Este loop orquestra as ações de verificar, aceitar, ir para a quest e farmar.
+spawn(function()
+    while wait() do -- Loop contínuo.
+        if _G.AutoQuest then
+            CheckQuest() -- Atualiza as informações da quest.
+            AcceptQuest() -- Tenta aceitar a quest.
+            GoToQuest()   -- Teleporta para a localização da quest.
+            FarmMob()     -- Inicia o farm do mob da quest.
+        end
+    end
+end)
+
+-- Loop para remover efeitos visuais indesejados (Anti-Effect).
+spawn(function()
+    RunService.Stepped:Connect(function() -- Conecta uma função a cada frame do jogo.
+        if _G.Remove_Effect then
+            -- Itera sobre os efeitos visuais e remove aqueles com o nome "Death".
+            for i, v in pairs(ReplicatedStorage.Effect.Container:GetChildren()) do
+                if v.Name == "Death" then
+                    v:Destroy() -- Remove o efeito.
+                end
+            end
+        end
+    end)
+end)
+
+-- Loop para detectar administradores/desenvolvedores e desconectar o jogador (Anti-Ban).
+spawn(function()
+    while wait() do
+        for i, v in pairs(Players:GetPlayers()) do -- Itera sobre todos os jogadores no servidor.
+            -- Verifica se o nome do jogador corresponde a uma lista de possíveis nomes de administradores/desenvolvedores.
+            if v.Name == "red_game43" or v.Name == "rip_indra" or v.Name == "Axiore" or v.Name == "Polkster" or v.Name == "wenlocktoad" or v.Name == "Daigrock" or v.Name == "toilamvidamme" or v.Name == "oofficialnoobie" or v.Name == "Uzoth" or v.Name == "Azarth" or v.Name == "arlthmetic" or v.Name == "Death_King" or v.Name == "Lunoven" or v.Name == "TheGreateAced" or v.Name == "rip_fud" or v.Name == "drip_mama" or v.Name == "layandikit12" or v.Name == "Hingoi" then
+                Hop() -- Se um admin for detectado, o jogador é desconectado.
+            end
+        end
+    end
+end)
+
+-- Loop para auto-ataque em mobs (Kill Aura contínuo e separado do loop principal).
+spawn(function()
+    while wait() do
+        if _G.KillAura then
+            for i, v in pairs(game:GetService("Workspace").NPCs:GetChildren()) do
+                if v.Name == _G.Mob and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 and v.HumanoidRootPart then
+                    ReplicatedStorage.Remotes.Attack:InvokeServer(v)
+                end
+            end
+        end
+    end
+end)
+
