@@ -413,7 +413,7 @@ Profile.BackgroundTransparency = 0.650
 Profile.BorderSizePixel = 0
 Profile.Position = UDim2.new(0.934172273, 0, 0.0926243663, 0)
 Profile.Size = UDim2.new(0, 40, 0, 40)
-Profile.Image = "https://www.roblox.com/headshot-thumbnail/image?userId=".. LocalPlayer.UserId .."&width=420&height=420&format=png"
+Profile.Image = "".. LocalPlayer.UserId .."&width=420&height=420&format=png"
 Profile.ScaleType = Enum.ScaleType.Crop
 
 UICorner_3.CornerRadius = UDim.new(1, 0)
@@ -468,7 +468,7 @@ RobloxProfile.BackgroundTransparency = 0.800
 RobloxProfile.BorderSizePixel = 0
 RobloxProfile.Position = UDim2.new(0.255566329, 0, 0.327615768, 0)
 RobloxProfile.Size = UDim2.new(0, 190, 0, 190)
-RobloxProfile.Image = "https://www.roblox.com/headshot-thumbnail/image?userId=".. LocalPlayer.UserId .."&width=420&height=420&format=png"
+RobloxProfile.Image = "".. LocalPlayer.UserId .."&width=420&height=420&format=png"
 RobloxProfile.ScaleType = Enum.ScaleType.Crop
 
 UICorner_4.Parent = RobloxProfile
@@ -897,10 +897,10 @@ if placeId == 2753915549 then
 	OldWorld = true
 elseif placeId == 4442272183 then
     Game.Text = "Second Sea"
-	NewWorld = true
+	NewWorld = false
 elseif placeId == 7449423635 then
     Game.Text = "Third Sea"
-	ThreeWorld = true
+	ThreeWorld = false
 end
 function Click()
 	game:GetService'VirtualUser':CaptureController()
@@ -1620,10 +1620,10 @@ end)
             if _G.level700CheckSea2ThieuNang then
                 local Lv = game.Players.LocalPlayer.Data.Level.Value
                 if Lv >= 700 and OldWorld then
-                    AutoKaitan = false
-                    _G.Auto_Farm = false
-                    _G.AutoFarm = false
-                    Auto_Farm = false
+                    AutoKaitan = true
+                    _G.Auto_Farm = true
+                    _G.AutoFarm = true
+                    Auto_Farm = true
                     if game.Workspace.Map.Ice.Door.CanCollide == true and game.Workspace.Map.Ice.Door.Transparency == 0 then
                         TP2(CFrame.new(4851.8720703125, 5.6514348983765, 718.47094726563))
                         wait(.5)
