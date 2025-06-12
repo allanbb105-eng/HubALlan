@@ -30,10 +30,14 @@ _G.CurrentFarmActive = false -- Flag para saber se alguma função de farm está
 _G.FarmType = nil            -- Armazena o tipo de farm ativo (ex: "BanditFarm", "GorillaFarm").
 
 _G.AutoQuest = true          -- Controla se o script deve automaticamente pegar e entregar quests.
-_G.AutoAttack = true         -- Controla se o script deve atacar os monstros.
+_G.AutoAttack = true         -- Controla se o script deve atacar os monstros (usado no auto-farm de quests).
 _G.TargetMob = nil           -- Uma variável para armazenar uma referência ao monstro que está sendo alvo no momento.
 
-local autoFarmThread = nil -- Variável para manter a referência à thread de farm, para poder pará-la.
+_G.AutoClick = false         -- Nova flag para o Auto Click.
+_G.AutoClickDelay = 0.05     -- Delay entre cliques para o Auto Click (em segundos).
+
+local autoFarmThread = nil   -- Variável para manter a referência à thread de farm.
+local autoClickThread = nil  -- Variável para manter a referência à thread de auto click.
 
 
 -- =====================================================================================================
@@ -106,24 +110,25 @@ function AttackTarget(target)
     local ReplicatedStorage = game:GetService("ReplicatedStorage")
     local AttackRemote = nil
 
-    -- TENTATIVAS DE ENCONTRAR O REMOTE EVENT DE ATAQUE
+    -- TENTATIVAS DE ENCONTRAR O REMOTE EVENT DE ATAQUE (MAIS COMUNS NO BLOX FRUITS)
+    -- *** ISTO É CRÍTICO! USE UM REMOTE SPY SE NÃO ESTIVER FUNCIONANDO! ***
     AttackRemote = ReplicatedStorage:FindFirstChild("Remote")
     if AttackRemote and AttackRemote:IsA("RemoteEvent") then
-        AttackRemote:FireServer("Attack", target.HumanoidRootPart)
+        AttackRemote:FireServer("Attack", target.HumanoidRootPart) -- Argumentos comuns para ataque M1
         -- print("[Attack] Tentando atacar via RemoteEvent 'Remote' com 'Attack' e alvo: " .. target.Name)
         wait(0.2) return
     end
 
     AttackRemote = ReplicatedStorage:FindFirstChild("Events") and ReplicatedStorage.Events:FindFirstChild("Attack")
     if AttackRemote and AttackRemote:IsA("RemoteEvent") then
-        AttackRemote:FireServer(target.HumanoidRootPart)
+        AttackRemote:FireServer(target.HumanoidRootPart) -- Outros argumentos comuns
         -- print("[Attack] Tentando atacar via RemoteEvent 'Events.Attack' com alvo: " .. target.Name)
         wait(0.2) return
     end
 
     AttackRemote = ReplicatedStorage:FindFirstChild("CombatEvents") and ReplicatedStorage.CombatEvents:FindFirstChild("Damage")
     if AttackRemote and AttackRemote:IsA("RemoteEvent") then
-        AttackRemote:FireServer(target.HumanoidRootPart, "M1")
+        AttackRemote:FireServer(target.HumanoidRootPart, "M1") -- Outros argumentos comuns
         -- print("[Attack] Tentando atacar via RemoteEvent 'CombatEvents.Damage' com alvo e tipo: " .. target.Name)
         wait(0.2) return
     end
@@ -142,13 +147,14 @@ function InteractWithNPC(npcName, cframe)
         local PlayerHRP = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
 
         if PlayerHRP then
-            Teleport(cframe or npc.HumanoidRootPart.CFrame * CFrame.new(0, 0, 5)) -- Usa a CFrame fornecida ou calcula uma próxima
+            Teleport(cframe or npc.HumanoidRootPart.CFrame * CFrame.new(0, 0, 5))
             wait(0.5)
 
             local ReplicatedStorage = game:GetService("ReplicatedStorage")
             local InteractRemote = nil
 
-            -- TENTATIVAS DE ENCONTRAR O REMOTE EVENT DE INTERAÇÃO COM NPC
+            -- TENTATIVAS DE ENCONTRAR O REMOTE EVENT DE INTERAÇÃO COM NPC (MAIS COMUNS NO BLOX FRUITS)
+            -- *** ISTO É CRÍTICO! USE UM REMOTE SPY SE NÃO ESTIVER FUNCIONANDO! ***
             InteractRemote = ReplicatedStorage:FindFirstChild("Remote")
             if InteractRemote and InteractRemote:IsA("RemoteEvent") then
                 InteractRemote:FireServer("Quest", npc.Name)
@@ -158,7 +164,7 @@ function InteractWithNPC(npcName, cframe)
 
             InteractRemote = ReplicatedStorage:FindFirstChild("Remote")
             if InteractRemote and InteractRemote:IsA("RemoteEvent") then
-                InteractRemote:FireServer("Evt", npc.Name, "Click")
+                InteractRemote:FireServer("Evt", npc.Name, "Click") -- Variação muito comum em Blox Fruits
                 -- print("[NPC Interaction] Tentando interagir com NPC '" .. npc.Name .. "' via 'Remote' com 'Evt', 'Click'.")
                 wait(0.5) return
             end
@@ -196,7 +202,7 @@ local function runFarmCycle(questData)
         print("[AutoQuest] Teletransportando para o NPC da Quest: " .. questNPCName)
         Teleport(questCFrame)
         wait(1.5)
-        InteractWithNPC(questNPCName, questCFrame) -- Passa a CFrame para Interagir
+        InteractWithNPC(questNPCName, questCFrame)
         wait(1.5)
     elseif _G.AutoQuest then
         warn("[AutoQuest] Não foi possível interagir com o NPC da quest. Verifique NPCName e CFrameQuest.")
@@ -211,7 +217,7 @@ local function runFarmCycle(questData)
         local mobsKilled = 0
         local attemptCount = 0
 
-        while mobsKilled < mobsToKill and _G.CurrentFarmActive and attemptCount < (mobsToKill * 20) do
+        while mobsKilled < mobsToKill and _G.CurrentFarmActive and _G.FarmType == questData.FarmName and attemptCount < (mobsToKill * 20) do
             _G.TargetMob = FindMob(mobName)
 
             if _G.TargetMob then
@@ -279,7 +285,7 @@ end
 -- Função para iniciar qualquer farm
 local function StartFarm(farmType, questData)
     if _G.CurrentFarmActive then
-        warn("Já existe um auto farm ativo. Por favor, pare o farm atual antes de iniciar um novo.")
+        warn("Já existe um auto farm ativo (" .. _G.FarmType .. "). Por favor, pare o farm atual antes de iniciar um novo.")
         return
     end
 
@@ -305,6 +311,7 @@ local function StartFarm(farmType, questData)
         print("====================================")
         print("          " .. farmType .. " PARADO.         ")
         print("====================================")
+        -- A atualização do status é feita na função StopFarm
         if _G.FarmType == farmType then -- Apenas se este for o farm que foi explicitamente parado
             updateStatusText("Status: Inativo")
             _G.FarmType = nil
@@ -322,7 +329,42 @@ function StopFarm()
     print("[Controle] Sinal para parar Auto Farm enviado.")
     _G.CurrentFarmActive = false -- Isso vai encerrar o loop 'while _G.CurrentFarmActive'
     _G.TargetMob = nil
-    -- O restante da limpeza e atualização da GUI será feita na própria thread do farm quando ela terminar
+    -- A atualização do status e reset da thread será feita na própria thread do farm quando ela terminar
+end
+
+-- =====================================================================================================
+--                            Bloco 3.5: Funções de Auto Click
+-- =====================================================================================================
+
+local function StartAutoClick()
+    if autoClickThread then
+        print("[AutoClick] Auto Click já está em execução.")
+        return
+    end
+
+    _G.AutoClick = true
+    print("====================================")
+    print("           Auto Click INICIADO!     ")
+    print("====================================")
+    
+    autoClickThread = spawn(function()
+        local mouse = game:GetService("Players").LocalPlayer:GetService("Mouse")
+        while _G.AutoClick do
+            mouse.Button1Down:fire()
+            wait(_G.AutoClickDelay)
+            mouse.Button1Up:fire()
+            wait(_G.AutoClickDelay)
+        end
+        print("====================================")
+        print("          Auto Click PARADO.        ")
+        print("====================================")
+        autoClickThread = nil
+    end)
+end
+
+local function StopAutoClick()
+    _G.AutoClick = false
+    print("[Controle] Sinal para parar Auto Click enviado.")
 end
 
 -- =====================================================================================================
@@ -334,17 +376,20 @@ end
 local QuestDefinitions = {
     -- PRIMEIRO MAR
     Bandit = {
+        FarmName = "Bandit Farm", -- Nome para exibir na GUI e para identificar o farm
         MinLevel = 1,
         MaxLevel = 9,
-        Mon = "Bandit",
+        Mon = "Bandit",             -- Nome EXATO do modelo do mob no Workspace
         NameQuest = "Bandit Quest",
         NameMon = "Bandit",
-        NPCName = "Bandit Quest Giver",
+        NPCName = "Bandit Quest Giver", -- Nome EXATO do modelo do NPC no Workspace
         MobsToKill = 5, -- Ou a quantidade que você quiser por ciclo
-        CFrameQuest = CFrame.new(1059.37195, 15.4495068, 1550.4231, 0.939700544, -0, -0.341998369, 0, 1, -0, 0.341998369, 0, 0.939700544), -- CFrame do NPC
-        CFrameMon = CFrame.new(1045.962646484375, 27.00250816345215, 1560.8203125) -- CFrame da área de spawn
+        -- SUBSTITUA ESTAS CFRAMES PELAS QUE VOCÊ OBTEVE NO JOGO!
+        CFrameQuest = CFrame.new(1059.37195, 15.4495068, 1550.4231, 0.939700544, -0, -0.341998369, 0, 1, -0, 0.341998369, 0, 0.939700544),
+        CFrameMon = CFrame.new(1045.962646484375, 27.00250816345215, 1560.8203125)
     },
     Gorilla = {
+        FarmName = "Gorilla Farm",
         MinLevel = 10,
         MaxLevel = 19,
         Mon = "Gorilla",
@@ -355,9 +400,10 @@ local QuestDefinitions = {
         CFrameQuest = CFrame.new(1471.74866, 15.4495068, 1618.173, 0.939700544, -0, -0.341998369, 0, 1, -0, 0.341998369, 0, 0.939700544),
         CFrameMon = CFrame.new(1495.60266, 27.00250816345215, 1632.74878)
     },
-    -- ADICIONE MAIS QUESTS AQUI SEGUINDO O PADRÃO:
+    -- ADICIONE MAIS QUESTS AQUI SEGUINDO O PADRÃO (copie e cole um bloco):
     -- Exemplo para o Segundo Mar:
     MarineCaptain = {
+        FarmName = "Marine Captain Farm",
         MinLevel = 700,
         MaxLevel = 749,
         Mon = "Marine Captain",
@@ -370,6 +416,7 @@ local QuestDefinitions = {
     },
     -- Exemplo para o Terceiro Mar:
     IceAdmiral = {
+        FarmName = "Ice Admiral Farm",
         MinLevel = 1500,
         MaxLevel = 1549,
         Mon = "Ice Admiral",
@@ -440,8 +487,8 @@ ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 250, 0, 350) -- Aumentado para acomodar mais botões
-MainFrame.Position = UDim2.new(0.5, -125, 0.5, -175) -- Centraliza o frame
+MainFrame.Size = UDim2.new(0, 250, 0, 420) -- Aumentado para acomodar mais botões e o auto click
+MainFrame.Position = UDim2.new(0.5, -125, 0.5, -210) -- Centraliza o frame
 MainFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 MainFrame.BorderSizePixel = 0
 MainFrame.Draggable = true
@@ -503,7 +550,7 @@ AutoQuestButton.MouseButton1Click:Connect(function()
     print("[Controle] AutoQuest agora está: " .. tostring(_G.AutoQuest))
 end)
 
--- Botão Toggle Auto Attack
+-- Botão Toggle Auto Attack (afeta o farm de quests)
 local AutoAttackButton = Instance.new("TextButton")
 AutoAttackButton.Name = "AutoAttack"
 AutoAttackButton.Size = UDim2.new(0.9, 0, 0, 25)
@@ -522,38 +569,50 @@ AutoAttackButton.MouseButton1Click:Connect(function()
 end)
 
 -- Separador visual
-local Separator = Instance.new("Frame")
-Separator.Name = "Separator"
-Separator.Size = UDim2.new(1, 0, 0, 2)
-Separator.Position = UDim2.new(0, 0, 0, 120)
-Separator.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
-Separator.Parent = MainFrame
+local Separator1 = Instance.new("Frame")
+Separator1.Name = "Separator1"
+Separator1.Size = UDim2.new(1, 0, 0, 2)
+Separator1.Position = UDim2.new(0, 0, 0, 120)
+Separator1.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+Separator1.Parent = MainFrame
 
--- ScrollFrame para os botões de níveis (se houver muitos)
+-- Título para a seção de Auto Farm de Níveis
+local LevelFarmLabel = Instance.new("TextLabel")
+LevelFarmLabel.Name = "LevelFarmLabel"
+LevelFarmLabel.Size = UDim2.new(1, 0, 0, 20)
+LevelFarmLabel.Position = UDim2.new(0, 0, 0, 125)
+LevelFarmLabel.BackgroundColor3 = Color3.fromRGB(55, 55, 55)
+LevelFarmLabel.Text = "--- Auto Farm por Nível ---"
+LevelFarmLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+LevelFarmLabel.Font = Enum.Font.SourceSansBold
+LevelFarmLabel.TextSize = 14
+LevelFarmLabel.BorderSizePixel = 0
+LevelFarmLabel.Parent = MainFrame
+
+-- ScrollFrame para os botões de níveis
 local LevelButtonsFrame = Instance.new("ScrollingFrame")
 LevelButtonsFrame.Name = "LevelButtonsFrame"
-LevelButtonsFrame.Size = UDim2.new(1, 0, 0.5, -120) -- Ocupa o resto do espaço
-LevelButtonsFrame.Position = UDim2.new(0, 0, 0, 125)
+LevelButtonsFrame.Size = UDim2.new(1, 0, 0.4, 0) -- Ajustado para caber o AutoClick
+LevelButtonsFrame.Position = UDim2.new(0, 0, 0, 148) -- Abaixo do título de Level Farm
 LevelButtonsFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 LevelButtonsFrame.BorderSizePixel = 0
-LevelButtonsFrame.CanvasSize = UDim2.new(0, 0, 0, 0) -- Será ajustado dinamicamente
+LevelButtonsFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
 LevelButtonsFrame.VerticalScrollBarInset = Enum.ScrollBarInset.Always
 LevelButtonsFrame.ScrollingDirection = Enum.ScrollingDirection.Y
 LevelButtonsFrame.Parent = MainFrame
 
 local UIListLayout = Instance.new("UIListLayout")
 UIListLayout.Name = "QuestButtonLayout"
-UIListLayout.Padding = UDim.new(0, 5) -- Espaçamento entre os botões
+UIListLayout.Padding = UDim.new(0, 5)
 UIListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 UIListLayout.VerticalAlignment = Enum.VerticalAlignment.Top
 UIListLayout.Parent = LevelButtonsFrame
 
 -- Função para criar um botão de quest dinamicamente
-local function createQuestButton(questName, questData, yPosition)
+local function createQuestButton(questName, questData)
     local button = Instance.new("TextButton")
-    button.Name = questName .. "FarmButton"
+    button.Name = questData.FarmName or questName .. "FarmButton"
     button.Size = UDim2.new(0.9, 0, 0, 30)
-    button.Position = UDim2.new(0.05, 0, 0, yPosition) -- Posição inicial, será ajustada pelo layout
     button.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
     button.Text = "Farm " .. questData.NameQuest .. " (Lvl " .. questData.MinLevel .. "-" .. questData.MaxLevel .. ")"
     button.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -564,39 +623,146 @@ local function createQuestButton(questName, questData, yPosition)
 
     button.MouseButton1Click:Connect(function()
         if _G.CurrentFarmActive then
-            if _G.FarmType == questName then
+            if _G.FarmType == questData.FarmName then
                 StopFarm() -- Se já está ativo para esta quest, para
-                print("Parando " .. questName .. " farm.")
+                print("Parando " .. questData.FarmName .. ".")
             else
                 warn("Já existe um farm ativo (" .. _G.FarmType .. "). Por favor, pare-o primeiro.")
-                -- Opcional: Parar o farm atual e iniciar o novo
-                -- StopFarm()
-                -- spawn(function() wait(1) StartFarm(questName, questData) end)
             end
         else
-            StartFarm(questName, questData)
+            StartFarm(questData.FarmName, questData)
         end
     end)
     return button
 end
 
 -- Adiciona os botões de quest dinamicamente
-local currentY = 0
+local currentYOffset = 0
 local buttonHeight = 30
 local padding = 5
 
 for questName, questData in pairs(QuestDefinitions) do
-    if (World1 and questData.MinLevel < 700) or (World2 and questData.MinLevel >= 700 and questData.MinLevel < 1500) or (World3 and questData.MinLevel >= 1500) then
-        -- Cria o botão e adiciona ao LevelButtonsFrame.
-        -- O UIListLayout se encarregará da posição, então yPosition é menos crítico aqui,
-        -- mas é bom ter uma ideia se você for remover o layout.
-        createQuestButton(questName, questData, currentY)
-        currentY = currentY + buttonHeight + padding
+    -- Filtra as quests pelo mar atual do jogador
+    if (World1 and questData.MinLevel < 700) or
+       (World2 and questData.MinLevel >= 700 and questData.MinLevel < 1500) or
+       (World3 and questData.MinLevel >= 1500) then
+        createQuestButton(questName, questData)
+        currentYOffset = currentYOffset + buttonHeight + padding
     end
 end
+LevelButtonsFrame.CanvasSize = UDim2.new(0, 0, 0, currentYOffset)
 
--- Ajusta o CanvasSize do ScrollingFrame para que todos os botões caibam
-LevelButtonsFrame.CanvasSize = UDim2.new(0, 0, 0, currentY)
+
+-- Separador visual para Auto Click
+local Separator2 = Instance.new("Frame")
+Separator2.Name = "Separator2"
+Separator2.Size = UDim2.new(1, 0, 0, 2)
+Separator2.Position = UDim2.new(0, 0, 0, LevelButtonsFrame.Position.Y.Offset + LevelButtonsFrame.Size.Y.Offset + 5)
+Separator2.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+Separator2.Parent = MainFrame
+
+-- Título para a seção de Auto Click
+local AutoClickLabel = Instance.new("TextLabel")
+AutoClickLabel.Name = "AutoClickLabel"
+AutoClickLabel.Size = UDim2.new(1, 0, 0, 20)
+AutoClickLabel.Position = UDim2.new(0, 0, 0, Separator2.Position.Y.Offset + Separator2.Size.Y.Offset + 3)
+AutoClickLabel.BackgroundColor3 = Color3.fromRGB(55, 55, 55)
+AutoClickLabel.Text = "--- Auto Click ---"
+AutoClickLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+AutoClickLabel.Font = Enum.Font.SourceSansBold
+AutoClickLabel.TextSize = 14
+AutoClickLabel.BorderSizePixel = 0
+AutoClickLabel.Parent = MainFrame
+
+-- Botão Toggle Auto Click
+local ToggleAutoClickButton = Instance.new("TextButton")
+ToggleAutoClickButton.Name = "AutoClick" -- Nome do botão para updateToggleButton
+ToggleAutoClickButton.Size = UDim2.new(0.9, 0, 0, 25)
+ToggleAutoClickButton.Position = UDim2.new(0.05, 0, 0, AutoClickLabel.Position.Y.Offset + AutoClickLabel.Size.Y.Offset + 5)
+ToggleAutoClickButton.Font = Enum.Font.SourceSansBold
+ToggleAutoClickButton.TextSize = 14
+ToggleAutoClickButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+ToggleAutoClickButton.BorderSizePixel = 0
+ToggleAutoClickButton.Parent = MainFrame
+updateToggleButton(ToggleAutoClickButton, _G.AutoClick) -- Inicializa o estado do botão
+
+ToggleAutoClickButton.MouseButton1Click:Connect(function()
+    _G.AutoClick = not _G.AutoClick
+    updateToggleButton(ToggleAutoClickButton, _G.AutoClick)
+    if _G.AutoClick then
+        StartAutoClick()
+    else
+        StopAutoClick()
+    end
+end)
+
+-- Slider para ajuste de Delay do Auto Click
+local DelaySliderLabel = Instance.new("TextLabel")
+DelaySliderLabel.Name = "DelaySliderLabel"
+DelaySliderLabel.Size = UDim2.new(0.9, 0, 0, 15)
+DelaySliderLabel.Position = UDim2.new(0.05, 0, 0, ToggleAutoClickButton.Position.Y.Offset + ToggleAutoClickButton.Size.Y.Offset + 5)
+DelaySliderLabel.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+DelaySliderLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+DelaySliderLabel.Font = Enum.Font.SourceSans
+DelaySliderLabel.TextSize = 12
+DelaySliderLabel.TextXAlignment = Enum.TextXAlignment.Left
+DelaySliderLabel.Text = "Delay: " .. string.format("%.2f", _G.AutoClickDelay) .. "s (Min: 0.01)"
+DelaySliderLabel.Parent = MainFrame
+
+local DelaySlider = Instance.new("Frame")
+DelaySlider.Name = "DelaySlider"
+DelaySlider.Size = UDim2.new(0.9, 0, 0, 15)
+DelaySlider.Position = UDim2.new(0.05, 0, 0, DelaySliderLabel.Position.Y.Offset + DelaySliderLabel.Size.Y.Offset)
+DelaySlider.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+DelaySlider.BorderSizePixel = 0
+DelaySlider.Parent = MainFrame
+
+local SliderButton = Instance.new("TextButton")
+SliderButton.Name = "SliderButton"
+SliderButton.Size = UDim2.new(0, 20, 1, 0)
+SliderButton.Position = UDim2.new(0, 0, 0, 0)
+SliderButton.BackgroundColor3 = Color3.fromRGB(100, 100, 200) -- Azul para o "botão" do slider
+SliderButton.Text = ""
+SliderButton.BorderSizePixel = 0
+SliderButton.Draggable = true -- Permite arrastar o botão do slider
+SliderButton.Parent = DelaySlider
+
+local minDelay = 0.01
+local maxDelay = 1.0
+
+SliderButton.Draggable = false -- Desativar arrastar nativo do Roblox
+
+local dragging = false
+local initialMousePos = 0
+local initialButtonPos = 0
+
+SliderButton.MouseButton1Down:Connect(function(x, y)
+    dragging = true
+    initialMousePos = x
+    initialButtonPos = SliderButton.Position.X.Offset
+end)
+
+game:GetService("UserInputService").InputChanged:Connect(function(input)
+    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local newXOffset = initialButtonPos + (input.Position.X - initialMousePos)
+        local minX = 0
+        local maxX = DelaySlider.AbsoluteSize.X - SliderButton.AbsoluteSize.X
+        
+        newXOffset = math.max(minX, math.min(maxX, newXOffset))
+        
+        SliderButton.Position = UDim2.new(0, newXOffset, 0, 0)
+        
+        local ratio = newXOffset / maxX
+        _G.AutoClickDelay = minDelay + (maxDelay - minDelay) * ratio
+        DelaySliderLabel.Text = "Delay: " .. string.format("%.2f", _G.AutoClickDelay) .. "s (Min: 0.01)"
+    end
+end)
+
+game:GetService("UserInputService").InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = false
+    end
+end)
 
 
 -- Botão STOP ALL FARM
@@ -614,6 +780,7 @@ StopAllFarmButton.Parent = MainFrame
 
 StopAllFarmButton.MouseButton1Click:Connect(function()
     StopFarm()
+    StopAutoClick() -- Garante que o auto click também pare
     updateStatusText("Status: Inativo")
 end)
 
@@ -638,7 +805,7 @@ HideShowButton.MouseButton1Click:Connect(function()
         MainFrame.Visible = true
         HideShowButton.Text = "Hide"
     end
-end)
+})
 
 -- Botão para Sair (Destruir a GUI e parar o script)
 local ExitButton = Instance.new("TextButton")
@@ -655,6 +822,7 @@ ExitButton.Parent = MainFrame
 
 ExitButton.MouseButton1Click:Connect(function()
     StopFarm()
+    StopAutoClick()
     ScreenGui:Destroy()
     warn("Script de Auto Farm finalizado e GUI destruída.")
 end)
@@ -663,4 +831,4 @@ end)
 updateStatusText("Status: Inativo")
 
 -- Mensagem de inicialização
-print("Auto Farm GUI carregada. Selecione uma opção de farm.")
+print("Auto Farm GUI carregada. Selecione uma opção de farm ou use o Auto Click.")
