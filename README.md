@@ -6,6 +6,7 @@ ChestESP = true
 DevilFruitESP = true
 FlowerESP = true
 RealFruitESP = true
+_G.AutoHop = false -- 🔁 Desativa Hop automático ao entrar (altere para true se quiser)
 
 -- ✅ ESPERA O JOGO CARREGAR E EXECUTA AS FUNÇÕES PRINCIPAIS
 repeat wait() until game:IsLoaded()
@@ -15,11 +16,10 @@ repeat wait() until game.Players.LocalPlayer.Character
 -- ✅ EXECUTA FUNÇÕES APÓS TUDO ESTAR PRONTO
 task.delay(3, function()
     if CheckQuest then pcall(CheckQuest) end
-    if Hop then pcall(Hop) end
+    if _G.AutoHop and Hop then pcall(Hop) end
 end)
 
 -- ✅ SCRIPT ORIGINAL AQUI
-
 
 if game.PlaceId == 2753915549 then
     World1 = true
@@ -11386,7 +11386,7 @@ end)
 OrionLib:Init()
 
 OrionLib:MakeNotification({
-    Name = "Allan Hub",
+    Name = "Allan HUb",
     Content = "Loading Config Complete!!",
     Image = "rbxassetid://119980140458596",
     Time = 5
