@@ -1,30 +1,29 @@
--- Verifica o PlaceId para determinar o mundo
+-- Informações sobre o mundo (PlaceId de Blox Fruits)
 local World1 = false
 local World2 = false
 local World3 = false
 
-if game.PlaceId == 2753915549 then -- ID do Primeiro Mar (First Sea)
+if game.PlaceId == 2753915549 then -- Primeiro Mar (First Sea)
     World1 = true
-elseif game.PlaceId == 4442272183 then -- ID do Segundo Mar (Second Sea)
+elseif game.PlaceId == 4442272183 then -- Segundo Mar (Second Sea)
     World2 = true
-elseif game.PlaceId == 7449423635 then -- ID do Terceiro Mar (Third Sea)
+elseif game.PlaceId == 7449423635 then -- Terceiro Mar (Third Sea)
     World3 = true
 else
-    game:GetService("Players").LocalPlayer:Kick("Local não suportado. Por favor, entre em um dos mares suportados.")
+    game:GetService("Players").LocalPlayer:Kick("Local não suportado. Por favor, entre em um dos mares suportados (Blox Fruits).")
 end
 
 -- Variáveis globais (_G) para controle do script
-_G.Remove_Effect = true -- Para remover o efeito de morte (original do seu script)
-_G.AutoFarm = false     -- Controla se o auto-farm está ativo (true para ligar, false para desligar)
-_G.AutoQuest = true     -- Controla se o script deve aceitar e entregar quests automaticamente
-_G.AutoAttack = true    -- Controla se o script deve atacar monstros automaticamente
-_G.TargetMob = nil      -- Referência ao monstro alvo atual
+_G.Remove_Effect = true  -- Para remover o efeito de morte
+_G.AutoFarm = false      -- Controla se o auto-farm está ativo
+_G.AutoQuest = true      -- Controla se o script deve aceitar e entregar quests automaticamente
+_G.AutoAttack = true     -- Controla se o script deve atacar monstros automaticamente
+_G.TargetMob = nil       -- Referência ao monstro alvo atual
 
 -- --- FUNÇÕES AUXILIARES GERAIS ---
 
--- Placeholder para a função Hop(). Seu executor pode já ter isso ou você pode precisar de uma implementação mais robusta.
--- Esta é uma implementação SIMPLES que tenta teletransportar para o mesmo PlaceId.
--- Muitos executores oferecem funções mais avançadas como `teleport.toRandomServer()` ou `teleport.toEmptyServer()`.
+-- Função Hop() para trocar de servidor (para evitar admins/players)
+-- Use a função nativa do seu executor se houver uma melhor (ex: teleport.toRandomServer())
 function Hop()
     print("[Hop] Tentando trocar de servidor...")
     local TeleportService = game:GetService("TeleportService")
@@ -49,7 +48,7 @@ function Teleport(cframe)
     end
 end
 
--- Função para encontrar um monstro pelo nome
+-- Função para encontrar o monstro mais próximo pelo nome
 function FindMob(name)
     local workspace = game:GetService("Workspace")
     local foundMob = nil
@@ -60,7 +59,7 @@ function FindMob(name)
     if not PlayerHRP then return nil end
 
     for i, v in pairs(workspace:GetChildren()) do
-        -- Verifica se é um modelo, tem o nome correto, tem um Humanoid e está vivo
+        -- Verifica se é um modelo, tem o nome correto, tem Humanoid e está vivo
         if v:IsA("Model") and v.Name:find(name, 1, true) and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 and v:FindFirstChild("HumanoidRootPart") then
             local mobHRP = v.HumanoidRootPart
             local distance = (PlayerHRP.Position - mobHRP.Position).magnitude
@@ -74,7 +73,7 @@ function FindMob(name)
     return foundMob -- Retorna o monstro mais próximo
 end
 
--- Função para atacar um alvo (simula cliques ou interações com RemoteEvents)
+-- Função para atacar um alvo (usando RemoteEvents para interação com o servidor)
 function AttackTarget(target)
     local LocalPlayer = game:GetService("Players").LocalPlayer
     local PlayerHRP = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
@@ -83,31 +82,34 @@ function AttackTarget(target)
         return
     end
 
-    -- Tenta atacar via RemoteEvent (comum em Blox Fruits)
+    -- Aponta o personagem para o alvo
+    PlayerHRP.CFrame = CFrame.new(PlayerHRP.Position, target.HumanoidRootPart.Position)
+
     local ReplicatedStorage = game:GetService("ReplicatedStorage")
-    local AttackRemote = ReplicatedStorage:FindFirstChild("Remote") -- Nome comum para o Remote de ataque em Blox Fruits
+    -- *** IMPORTANTE: Verifique o nome do RemoteEvent de ataque em Blox Fruits com um Remote Spy! ***
+    -- "Remote" é um nome comum, mas pode ser diferente (ex: "Events.Attack", "CombatEvents.Damage")
+    local AttackRemote = ReplicatedStorage:FindFirstChild("Remote")
 
     if AttackRemote and AttackRemote:IsA("RemoteEvent") then
-        -- Os argumentos do FireServer podem variar muito dependendo da atualização do jogo.
-        -- Para M1 (ataque básico), geralmente basta o alvo ou a CFrame do alvo.
-        -- Você pode precisar de um Remote Spy para verificar os argumentos exatos.
-        AttackRemote:FireServer("Attack", target.HumanoidRootPart) -- Exemplo comum de chamada para ataque
-        -- Para habilidades específicas, você pode precisar de outro Remote ou de argumentos diferentes:
-        -- AttackRemote:FireServer("Ability", "FlamePillar", target.HumanoidRootPart)
-        -- print("[Attack] Atacando via RemoteEvent: " .. target.Name)
+        -- *** ARGUMENTOS: Os argumentos também são CRÍTICOS e devem ser os que o jogo espera! ***
+        -- Para ataques básicos (M1), geralmente é o alvo (HumanoidRootPart).
+        -- Para habilidades (fruta/espada/estilo), pode ser o nome da habilidade/ID e o alvo.
+        AttackRemote:FireServer("Attack", target.HumanoidRootPart) -- Exemplo comum para ataque básico (M1)
+        -- Exemplo se fosse uma habilidade: AttackRemote:FireServer("Ability", "NomeDaHabilidade", target.HumanoidRootPart)
+        -- Exemplo para Blox Fruits: AttackRemote:FireServer("Skill", "Z_ABILITY", target.HumanoidRootPart)
+        print("[Attack] Atacando via RemoteEvent: " .. target.Name)
     else
-        -- Fallback: Simula um clique do mouse se o RemoteEvent não for encontrado ou não for usado.
-        -- Move o jogador para olhar para o alvo antes de clicar.
-        PlayerHRP.CFrame = CFrame.new(PlayerHRP.Position, target.HumanoidRootPart.Position)
+        warn("[Attack] Remote de ataque 'Remote' não encontrado ou inválido! Atacando via clique do mouse (pode não dar dano).")
+        -- Fallback: Simula um clique do mouse (provavelmente não dará dano real em Blox Fruits)
         game:GetService("Players").LocalPlayer:GetService("Mouse").Button1Down:fire()
-        wait(0.1) -- Pequeno delay para simular o ataque
+        wait(0.1)
         game:GetService("Players").LocalPlayer:GetService("Mouse").Button1Up:fire()
-        -- print("[Attack] Atacando via clique do mouse (fallback): " .. target.Name)
     end
+    wait(0.2) -- Pequeno delay entre ataques para evitar flood
 end
 
--- --- LÓGICA DO JOGO ESPECÍFICA (CheckQuest agora retorna uma tabela com dados da quest) ---
-
+-- --- LÓGICA DE QUESTS (CheckQuest agora retorna uma tabela com dados da quest) ---
+-- *** VOCÊ PRECISA ATUALIZAR AS CFrames AQUI! ***
 function CheckQuest()
     local LocalPlayer = game:GetService("Players").LocalPlayer
     local MyLevel = LocalPlayer.Data.Level.Value
@@ -116,13 +118,13 @@ function CheckQuest()
     if World1 then
         if MyLevel >= 1 and MyLevel <= 9 then
             questData = {
-                Mon = "Bandit", -- Nome do modelo do monstro
+                Mon = "Bandit", -- Nome do modelo do monstro no Workspace
                 LevelQuest = 1,
-                NameQuest = "Bandit Quest", -- Nome da quest no jogo
-                NameMon = "Bandit", -- Nome para encontrar o monstro (geralmente o mesmo que 'Mon')
-                NPCName = "Bandit Quest Giver", -- Nome do NPC que dá a quest
-                CFrameQuest = CFrame.new(1059.37195, 15.4495068, 1550.4231, 0.939700544, -0, -0.341998369, 0, 1, -0, 0.341998369, 0, 0.939700544), -- CFrame do NPC da quest
-                CFrameMon = CFrame.new(1045.962646484375, 27.00250816345215, 1560.8203125) -- CFrame da área de spawn dos monstros
+                NameQuest = "Bandit Quest", -- Nome da quest para interface
+                NameMon = "Bandit", -- Nome para encontrar o monstro
+                NPCName = "Bandit Quest Giver", -- Nome do NPC
+                CFrameQuest = CFrame.new(1059.37195, 15.4495068, 1550.4231, 0.939700544, -0, -0.341998369, 0, 1, -0, 0.341998369, 0, 0.939700544), -- CFrame do NPC
+                CFrameMon = CFrame.new(1045.962646484375, 27.00250816345215, 1560.8203125) -- CFrame da área de spawn do monstro
             }
         elseif MyLevel >= 10 and MyLevel <= 19 then
             questData = {
@@ -134,21 +136,20 @@ function CheckQuest()
                 CFrameQuest = CFrame.new(1471.74866, 15.4495068, 1618.173, 0.939700544, -0, -0.341998369, 0, 1, -0, 0.341998369, 0, 0.939700544),
                 CFrameMon = CFrame.new(1495.60266, 27.00250816345215, 1632.74878)
             }
-        -- [[ ADICIONE MAIS QUESTS AQUI PARA WORLD1 ]]
         -- Exemplo para o próximo conjunto de níveis em World1:
         elseif MyLevel >= 20 and MyLevel <= 29 then
             questData = {
-                Mon = "Jungle Pirate", -- Ajuste o nome do monstro conforme o jogo
+                Mon = "Jungle Pirate",
                 LevelQuest = 20,
                 NameQuest = "Jungle Pirate Quest",
                 NameMon = "Jungle Pirate",
-                NPCName = "Jungle Pirate Quest Giver", -- Ajuste o nome do NPC
+                NPCName = "Jungle Pirate Quest Giver",
                 CFrameQuest = CFrame.new(0,0,0), -- <<<<<<<<<<<<<<< SUBSTITUA ESTA CFrame
                 CFrameMon = CFrame.new(0,0,0) -- <<<<<<<<<<<<<<< SUBSTITUA ESTA CFrame
             }
+        -- [[ ADICIONE MAIS QUESTS PARA WORLD1 AQUI (copie e cole o bloco elseif) ]]
         end
     elseif World2 then
-        -- [[ ADICIONE QUESTS AQUI PARA WORLD2 ]]
         -- Exemplo para World2:
         if MyLevel >= 700 and MyLevel <= 749 then
             questData = {
@@ -160,14 +161,13 @@ function CheckQuest()
                 CFrameQuest = CFrame.new(0,0,0), -- <<<<<<<<<<<<<<< SUBSTITUA ESTA CFrame
                 CFrameMon = CFrame.new(0,0,0) -- <<<<<<<<<<<<<<< SUBSTITUA ESTA CFrame
             }
-        -- Adicione mais quests para World2
+        -- [[ ADICIONE MAIS QUESTS PARA WORLD2 AQUI ]]
         end
     elseif World3 then
-        -- [[ ADICIONE QUESTS AQUI PARA WORLD3 ]]
         -- Exemplo para World3:
         if MyLevel >= 1500 and MyLevel <= 1549 then
             questData = {
-                Mon = "Ice Admiral", -- Nome do modelo do monstro no jogo
+                Mon = "Ice Admiral",
                 LevelQuest = 1500,
                 NameQuest = "Ice Admiral Quest",
                 NameMon = "Ice Admiral",
@@ -175,6 +175,7 @@ function CheckQuest()
                 CFrameQuest = CFrame.new(0,0,0), -- <<<<<<<<<<<<<<< SUBSTITUA ESTA CFrame
                 CFrameMon = CFrame.new(0,0,0) -- <<<<<<<<<<<<<<< SUBSTITUA ESTA CFrame
             }
+        -- [[ ADICIONE MAIS QUESTS PARA WORLD3 AQUI ]]
         end
     end
     return questData
@@ -188,25 +189,28 @@ function InteractWithNPC(npcName)
         local PlayerHRP = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
 
         if PlayerHRP then
-            -- Teleporta para perto do NPC
-            Teleport(npc.HumanoidRootPart.CFrame * CFrame.new(0, 0, 5)) -- Ajusta para ficar na frente do NPC
-            wait(0.5) -- Espera um pouco
+            Teleport(npc.HumanoidRootPart.CFrame * CFrame.new(0, 0, 5))
+            wait(0.5)
 
-            -- Tenta interagir (pode ser um RemoteEvent para alguns jogos, como Blox Fruits)
             local ReplicatedStorage = game:GetService("ReplicatedStorage")
-            local InteractRemote = ReplicatedStorage:FindFirstChild("Remote") or ReplicatedStorage:FindFirstChild("Events") and ReplicatedStorage.Events:FindFirstChild("Interact")
+            -- *** IMPORTANTE: Verifique o nome do RemoteEvent de interação em Blox Fruits com um Remote Spy! ***
+            -- "Remote" é um nome comum, mas pode ser "Events.Interact", "QuestHandler", etc.
+            local InteractRemote = ReplicatedStorage:FindFirstChild("Remote")
 
             if InteractRemote and InteractRemote:IsA("RemoteEvent") then
-                -- Os argumentos para interagir com NPC de quest em Blox Fruits podem ser específicos.
-                -- Use um Remote Spy para verificar os argumentos exatos (ex: "Quest", NPC.Name, quest.Name).
-                InteractRemote:FireServer("Quest", npc.Name) -- Tentativa comum para Blox Fruits
+                -- *** ARGUMENTOS: Os argumentos devem ser os que o jogo espera para aceitar/entregar quests! ***
+                -- Exemplo comum para Blox Fruits:
+                InteractRemote:FireServer("Quest", npc.Name) -- Tenta essa primeiro
+                -- Se não funcionar, tente simular um clique no NPC (muito comum em Blox Fruits):
+                -- InteractRemote:FireServer("Evt", npc.Name, "Click")
+                -- Ou tente algo mais específico que encontrar no Remote Spy:
+                -- InteractRemote:FireServer("AcceptQuest", npc.Name, "QuestName")
+                -- InteractRemote:FireServer("CompleteQuest", npc.Name)
                 print("[NPC Interaction] Tentando interagir com NPC: " .. npc.Name)
             else
-                warn("[NPC Interaction] Remote de interação não encontrado ou inválido! Tentando fallback...")
-                -- Fallback: Simular um clique ou pressionar 'E' se não houver um Remote direto
-                -- (Isso raramente funciona para sistemas de quest complexos)
+                warn("[NPC Interaction] Remote de interação 'Remote' não encontrado ou inválido! A interação com o NPC pode não funcionar.")
             end
-            wait(0.5) -- Pequeno delay após a interação
+            wait(0.5)
         end
     else
         warn("[NPC Interaction] NPC '" .. npcName .. "' não encontrado para interação.")
@@ -215,124 +219,131 @@ end
 
 -- --- FUNÇÃO PRINCIPAL DE AUTO-FARM ---
 
+local autoFarmThread = nil -- Variável para armazenar a thread do auto-farm
+
 function StartAutoFarm()
+    if _G.AutoFarm and autoFarmThread then
+        print("[AutoFarm] Auto Farm já está em execução.")
+        return
+    end
+
     _G.AutoFarm = true
     print("====================================")
     print("           Auto Farm INICIADO!      ")
     print("====================================")
-    print("Controles: ")
-    print(" _G.AutoFarm = false   (Para parar)")
-    print(" _G.G.AutoQuest = false (Desativa auto-quest)")
-    print(" _G.AutoAttack = false (Desativa auto-ataque)")
-    print("====================================")
+    updateStatusText("Status: Ativo") -- Atualiza a GUI
 
-    while _G.AutoFarm do
-        local questData = CheckQuest()
+    autoFarmThread = spawn(function()
+        while _G.AutoFarm do
+            local questData = CheckQuest()
 
-        if not questData.Mon then
-            warn("Nenhuma quest encontrada para o seu nível atual. Verifique a função CheckQuest(). Parando Auto Farm.")
-            _G.AutoFarm = false
-            break
-        end
+            if not questData.Mon then
+                warn("Nenhuma quest encontrada para o seu nível atual ou dados incompletos. Verifique a função CheckQuest(). Parando Auto Farm.")
+                StopAutoFarm()
+                break
+            end
 
-        local questNPCName = questData.NPCName
-        local mobName = questData.Mon
-        local questCFrame = questData.CFrameQuest
-        local mobSpawnCFrame = questData.CFrameMon
-        local mobsToKill = 5 -- Quantidade de mobs para matar por quest (AJUSTE CONFORME O JOGO)
+            local questNPCName = questData.NPCName
+            local mobName = questData.Mon
+            local questCFrame = questData.CFrameQuest
+            local mobSpawnCFrame = questData.CFrameMon
+            local mobsToKill = 5 -- Quantidade de mobs para matar por quest (AJUSTE CONFORME O JOGO E A QUEST)
 
-        print("\n--- Ciclo de Farm para Nível " .. game:GetService("Players").LocalPlayer.Data.Level.Value .. " (Quest: " .. questData.NameQuest .. ") ---")
+            print("\n--- Ciclo de Farm para Nível " .. game:GetService("Players").LocalPlayer.Data.Level.Value .. " (Quest: " .. questData.NameQuest .. ") ---")
 
-        -- 1. Aceitar/Completar Quest (se _G.AutoQuest estiver ativado)
-        if _G.AutoQuest and questNPCName and questCFrame then
-            print("[AutoQuest] Teletransportando para o NPC da Quest: " .. questNPCName)
-            Teleport(questCFrame)
-            wait(1.5) -- Espera para carregamento
-            InteractWithNPC(questNPCName)
-            wait(1.5) -- Espera após interagir com o NPC
-        end
+            -- 1. Aceitar/Completar Quest (se _G.AutoQuest estiver ativado)
+            if _G.AutoQuest and questNPCName and questCFrame then
+                print("[AutoQuest] Teletransportando para o NPC da Quest: " .. questNPCName)
+                Teleport(questCFrame)
+                wait(1.5) -- Espera para carregamento
+                InteractWithNPC(questNPCName)
+                wait(1.5) -- Espera após interagir com o NPC
+            end
 
-        -- 2. Teletransportar para o local de spawn dos monstros
-        print("[Farm] Teletransportando para a área de farm de: " .. mobName)
-        Teleport(mobSpawnCFrame)
-        wait(1.5) -- Espera para o carregamento do mapa/mobs
+            -- 2. Teletransportar para o local de spawn dos monstros
+            print("[Farm] Teletransportando para a área de farm de: " .. mobName)
+            Teleport(mobSpawnCFrame)
+            wait(1.5) -- Espera para o carregamento do mapa/mobs
 
-        -- 3. Encontrar e atacar monstros
-        local mobsKilled = 0
-        local attemptCount = 0 -- Contador de tentativas para evitar loops infinitos
+            -- 3. Encontrar e atacar monstros
+            local mobsKilled = 0
+            local attemptCount = 0 -- Contador de tentativas para evitar loops infinitos caso o mob não apareça
 
-        while mobsKilled < mobsToKill and _G.AutoFarm and attemptCount < (mobsToKill * 10) do -- Limita tentativas
-            _G.TargetMob = FindMob(mobName)
+            while mobsKilled < mobsToKill and _G.AutoFarm and attemptCount < (mobsToKill * 10) do -- Limita tentativas
+                _G.TargetMob = FindMob(mobName)
 
-            if _G.TargetMob then
-                print("[Farm] Atacando: " .. _G.TargetMob.Name .. " (" .. mobsKilled .. "/" .. mobsToKill .. " abatidos)")
-                if _G.AutoAttack then
-                    AttackTarget(_G.TargetMob)
-                end
-                
-                -- Espera o monstro morrer ou tenta atacar novamente
-                local attackAttempts = 0
-                while _G.TargetMob and _G.TargetMob:FindFirstChild("Humanoid") and _G.TargetMob.Humanoid.Health > 0 and attackAttempts < 30 and _G.AutoFarm do
+                if _G.TargetMob then
+                    print("[Farm] Atacando: " .. _G.TargetMob.Name .. " (" .. mobsKilled .. "/" .. mobsToKill .. " abatidos)")
                     if _G.AutoAttack then
                         AttackTarget(_G.TargetMob)
                     end
-                    wait(0.2) -- Pequeno delay entre ataques
-                    attackAttempts = attackAttempts + 1
-                    -- Se o alvo estiver muito longe após um teleporte, tenta se reaproximar
-                    if (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - _G.TargetMob.HumanoidRootPart.Position).magnitude > 20 then
-                        Teleport(_G.TargetMob.HumanoidRootPart.CFrame * CFrame.new(0,0,5)) -- Teleporta para perto do alvo
+                    
+                    local attackAttempts = 0
+                    while _G.TargetMob and _G.TargetMob:FindFirstChild("Humanoid") and _G.TargetMob.Humanoid.Health > 0 and attackAttempts < 30 and _G.AutoFarm do
+                        if _G.AutoAttack then
+                            AttackTarget(_G.TargetMob)
+                        end
+                        wait(0.2) -- Pequeno delay entre ataques
+                        attackAttempts = attackAttempts + 1
+                        -- Se o alvo estiver muito longe após um teleporte, tenta se reaproximar
+                        if (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - _G.TargetMob.HumanoidRootPart.Position).magnitude > 20 then
+                            Teleport(_G.TargetMob.HumanoidRootPart.CFrame * CFrame.new(0,0,5)) -- Teleporta para perto do alvo
+                            wait(0.5) -- Espera um pouco após o re-teleporte
+                        end
                     end
-                end
 
-                if not _G.TargetMob or not _G.TargetMob:FindFirstChild("Humanoid") or _G.TargetMob.Humanoid.Health <= 0 then
-                    print("[Farm] Monstro derrotado: " .. mobName)
-                    mobsKilled = mobsKilled + 1
-                    _G.TargetMob = nil -- Limpa o alvo
-                    wait(0.5) -- Pequeno delay antes de procurar o próximo
+                    if not _G.TargetMob or not _G.TargetMob:FindFirstChild("Humanoid") or _G.TargetMob.Humanoid.Health <= 0 then
+                        print("[Farm] Monstro derrotado: " .. mobName)
+                        mobsKilled = mobsKilled + 1
+                        _G.TargetMob = nil -- Limpa o alvo para buscar o próximo
+                        wait(0.5) -- Pequeno delay antes de procurar o próximo
+                    else
+                        warn("[Farm] Monstro '" .. mobName .. "' não derrotado ou problema no alvo. Buscando próximo. Saúde restante: " .. _G.TargetMob.Humanoid.Health)
+                        _G.TargetMob = nil -- Limpa o alvo para buscar outro
+                    end
                 else
-                    warn("[Farm] Monstro não derrotado ou problema no alvo. Buscando próximo. Saúde restante: " .. _G.TargetMob.Humanoid.Health)
-                    _G.TargetMob = nil -- Limpa o alvo para buscar outro
+                    print("[Farm] Nenhum monstro '" .. mobName .. "' encontrado. Esperando o spawn ou procurando novamente...")
+                    wait(2) -- Espera um pouco antes de tentar encontrar novamente
                 end
-            else
-                print("[Farm] Nenhum monstro '" .. mobName .. "' encontrado. Esperando o spawn ou procurando novamente...")
-                wait(2) -- Espera um pouco antes de tentar encontrar novamente
+                attemptCount = attemptCount + 1
+                wait(0.1)
             end
-            attemptCount = attemptCount + 1
-            wait(0.1) -- Pequeno delay entre as iterações do loop interno
+
+            if mobsKilled >= mobsToKill then
+                print("[Farm] Mobs suficientes derrotados (" .. mobsKilled .. "/" .. mobsToKill .. ") para a quest de " .. mobName .. ".")
+            else
+                warn("[Farm] Não foi possível derrotar todos os mobs para a quest atual. Abatidos: " .. mobsKilled .. ". Verifique se as CFrames e os nomes dos mobs estão corretos ou se os remotes de ataque estão funcionando.")
+            end
+
+            -- 4. Voltar para o NPC da Quest para entregar (se _G.AutoQuest estiver ativado)
+            if _G.AutoQuest and questNPCName and questCFrame then
+                print("[AutoQuest] Voltando para o NPC da Quest para entregar: " .. questNPCName)
+                Teleport(questCFrame)
+                wait(1.5)
+                InteractWithNPC(questNPCName)
+                wait(1.5)
+            end
+
+            wait(2) -- Pequeno delay antes de checar a próxima quest ou loop
         end
-
-        if mobsKilled >= mobsToKill then
-            print("[Farm] Mobs suficientes derrotados (" .. mobsKilled .. "/" .. mobsToKill .. ") para a quest de " .. mobName .. ".")
-        else
-            warn("[Farm] Não foi possível derrotar todos os mobs. Total: " .. mobsKilled .. ". Verifique se as CFrames e os nomes dos mobs estão corretos.")
-        end
-
-
-        -- 4. Voltar para o NPC da Quest para entregar (se _G.AutoQuest estiver ativado)
-        if _G.AutoQuest and questNPCName and questCFrame then
-            print("[AutoQuest] Voltando para o NPC da Quest para entregar: " .. questNPCName)
-            Teleport(questCFrame)
-            wait(1.5)
-            InteractWithNPC(questNPCName)
-            wait(1.5) -- Espera após entregar a quest
-        end
-
-        wait(2) -- Pequeno delay antes de checar a próxima quest ou loop
-    end
-    print("====================================")
-    print("          Auto Farm PARADO.         ")
-    print("====================================")
+        print("====================================")
+        print("          Auto Farm PARADO.         ")
+        print("====================================")
+        updateStatusText("Status: Inativo") -- Atualiza a GUI
+        autoFarmThread = nil -- Reseta a thread
+    end)
 end
 
 function StopAutoFarm()
     _G.AutoFarm = false
     _G.TargetMob = nil
     print("[Controle] Sinal para parar Auto Farm enviado.")
+    updateStatusText("Status: Inativo") -- Atualiza a GUI
 end
 
--- --- THREADS E LISTENERS SECUNDÁRIOS ---
+-- --- THREADS E LISTENERS SECUNDÁRIOS (Originalmente do seu script ou aprimorados) ---
 
--- Thread para remover efeitos de morte (original do seu script)
+-- Thread para remover efeitos de morte (para melhor visibilidade)
 spawn(function()
     game:GetService('RunService').Stepped:Connect(function()
         if _G.Remove_Effect then
@@ -345,7 +356,7 @@ spawn(function()
     end)
 end)
 
--- Thread para detectar administradores/jogadores específicos e dar Hop (original do seu script)
+-- Thread para detectar administradores/jogadores específicos e dar Hop
 spawn(function()
     while wait(5) do -- Verifica a cada 5 segundos
         for i,v in pairs(game.Players:GetPlayers()) do
@@ -366,50 +377,30 @@ spawn(function()
             local LocalPlayer = game:GetService("Players").LocalPlayer
             local Humanoid = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
             if Humanoid then
-                -- Simula um movimento mínimo
                 Humanoid:ChangeState(Enum.HumanoidStateType.Running)
                 wait(0.1)
                 Humanoid:ChangeState(Enum.HumanoidStateType.Idle)
-                -- Ou pode ser uma pequena rotação do personagem
-                -- LocalPlayer.Character.HumanoidRootPart.CFrame = LocalPlayer.Character.HumanoidRootPart.CFrame * CFrame.Angles(0, math.rad(1), 0)
             end
         end
     end
 end)
 
-
--- --- INSTRUÇÕES PARA INICIAR O AUTO FARM ---
-warn("Script de Auto Farm injetado! Para iniciar, digite no console do seu executor:")
-warn("   _G.AutoFarm = true")
-warn("   spawn(StartAutoFarm)")
-warn("\nPara parar o Auto Farm a qualquer momento, digite:")
-warn("   _G.AutoFarm = false")
-warn("   StopAutoFarm()")
-warn("\nVocê pode controlar as funcionalidades adicionais:")
-warn("   _G.AutoQuest = true/false (Ativar/desativar aceitar/entregar quests)")
-warn("   _G.AutoAttack = true/false (Ativar/desativar ataque automático)")
-
--- Descomente a linha abaixo e ajuste _G.AutoQuest e _G.AutoAttack para iniciar automaticamente
--- _G.AutoFarm = true
--- _G.AutoQuest = true
--- _G.AutoAttack = true
--- spawn(StartAutoFarm)
 -- --- INTERFACE GRÁFICA (GUI) ---
 
 local player = game:GetService("Players").LocalPlayer
-local guiService = game:GetService("GuiService")
 local coreGui = game:GetService("CoreGui") -- Geralmente o local para criar GUIs em exploits
 
 -- Cria a ScreenGui
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "AutoFarmGUI"
-ScreenGui.Parent = coreGui -- Ou player:WaitForChild("PlayerGui") se o executor permitir
+ScreenGui.Parent = coreGui -- Parent no CoreGui para ser visível mesmo em jogos (para exploits)
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling -- Garante que a GUI fique por cima de outras
 
 -- Cria o Frame principal
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 200, 0, 150) -- Largura, Altura
-MainFrame.Position = UDim2.new(0.5, -100, 0.5, -75) -- Centraliza na tela
+MainFrame.Size = UDim2.new(0, 220, 0, 180) -- Largura, Altura (Aumentado para mais espaço)
+MainFrame.Position = UDim2.new(0.5, -110, 0.5, -90) -- Centraliza na tela
 MainFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 MainFrame.BorderSizePixel = 0
 MainFrame.Draggable = true -- Permite arrastar o frame
@@ -421,7 +412,7 @@ TitleLabel.Name = "TitleLabel"
 TitleLabel.Size = UDim2.new(1, 0, 0, 30)
 TitleLabel.Position = UDim2.new(0, 0, 0, 0)
 TitleLabel.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-TitleLabel.Text = "Auto Farm by Gemini"
+TitleLabel.Text = "⚡ Auto Farm Blox Fruits ⚡"
 TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 TitleLabel.Font = Enum.Font.SourceSansBold
 TitleLabel.TextSize = 18
@@ -493,16 +484,16 @@ updateToggleButton(AutoQuestButton, _G.AutoQuest)
 AutoQuestButton.MouseButton1Click:Connect(function()
     _G.AutoQuest = not _G.AutoQuest
     updateToggleButton(AutoQuestButton, _G.AutoQuest)
-    print("AutoQuest agora está: " .. tostring(_G.AutoQuest))
+    print("[Controle] AutoQuest agora está: " .. tostring(_G.AutoQuest))
 end)
 
 -- Botão Toggle Auto Attack
 local AutoAttackButton = Instance.new("TextButton")
 AutoAttackButton.Name = "AutoAttack"
-AutoAttackButton.Size = UDim2.new(0.9, 0, 0, 15) -- Tamanho menor para caber
+AutoAttackButton.Size = UDim2.new(0.9, 0, 0, 30)
 AutoAttackButton.Position = UDim2.new(0.05, 0, 0, 130)
 AutoAttackButton.Font = Enum.Font.SourceSansBold
-AutoAttackButton.TextSize = 12
+AutoAttackButton.TextSize = 16
 AutoAttackButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 AutoAttackButton.BorderSizePixel = 0
 AutoAttackButton.Parent = MainFrame
@@ -511,7 +502,51 @@ updateToggleButton(AutoAttackButton, _G.AutoAttack)
 AutoAttackButton.MouseButton1Click:Connect(function()
     _G.AutoAttack = not _G.AutoAttack
     updateToggleButton(AutoAttackButton, _G.AutoAttack)
-    print("AutoAttack agora está: " .. tostring(_G.AutoAttack))
+    print("[Controle] AutoAttack agora está: " .. tostring(_G.AutoAttack))
+end)
+
+-- Botão para Hide/Show a GUI
+local HideShowButton = Instance.new("TextButton")
+HideShowButton.Name = "Hide/Show"
+HideShowButton.Size = UDim2.new(0.4, 0, 0, 15)
+HideShowButton.Position = UDim2.new(0.05, 0, 0, 165)
+HideShowButton.Font = Enum.Font.SourceSans
+HideShowButton.TextSize = 12
+HideShowButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+HideShowButton.BackgroundColor3 = Color3.fromRGB(90, 90, 90)
+HideShowButton.Text = "Hide"
+HideShowButton.BorderSizePixel = 0
+HideShowButton.Parent = MainFrame
+
+HideShowButton.MouseButton1Click:Connect(function()
+    if MainFrame.Visible then
+        MainFrame.Visible = false
+        HideShowButton.Text = "Show"
+    else
+        MainFrame.Visible = true
+        HideShowButton.Text = "Hide"
+    end
+end)
+
+-- Botão para Sair (Destruir a GUI e parar script)
+local ExitButton = Instance.new("TextButton")
+ExitButton.Name = "Exit"
+ExitButton.Size = UDim2.new(0.4, 0, 0, 15)
+ExitButton.Position = UDim2.new(0.55, 0, 0, 165)
+ExitButton.Font = Enum.Font.SourceSans
+ExitButton.TextSize = 12
+ExitButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+ExitButton.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
+ExitButton.Text = "Exit"
+ExitButton.BorderSizePixel = 0
+ExitButton.Parent = MainFrame
+
+ExitButton.MouseButton1Click:Connect(function()
+    StopAutoFarm() -- Garante que o auto-farm pare
+    ScreenGui:Destroy() -- Remove a GUI
+    -- Tenta parar o script (isso pode variar dependendo do executor)
+    -- Em alguns executores, você pode precisar de um comando como `script:Destroy()` ou `self:Destroy()`
+    warn("Script de Auto Farm finalizado e GUI destruída.")
 end)
 
 -- Inicializa o status na GUI
