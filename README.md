@@ -11,17 +11,17 @@ local World3 = false
 
 if game.PlaceId == 2753915549 then -- PlaceId do Primeiro Mar
     World1 = true
-    print("Detectado: Primeiro Mar")
+    print("Detectado: Primeiro Mar (PlaceId: 2753915549)")
 elseif game.PlaceId == 4442272183 then -- PlaceId do Segundo Mar
     World2 = true
-    print("Detectado: Segundo Mar")
+    print("Detectado: Segundo Mar (PlaceId: 4442272183)")
 elseif game.PlaceId == 7449423635 then -- PlaceId do Terceiro Mar
     World3 = true
-    print("Detectado: Terceiro Mar")
+    print("Detectado: Terceiro Mar (PlaceId: 7449423635)")
 else
     -- ATENÇÃO: COMENTEI ESTA LINHA PARA EVITAR KICK DURANTE A DEPURACAO.
     -- game:GetService("Players").LocalPlayer:Kick("Local não suportado. Por favor, entre em um dos mares suportados (Blox Fruits).")
-    print("AVISO: PlaceId não reconhecido. Certifique-se de estar em um dos mares do Blox Fruits.")
+    print("AVISO: PlaceId não reconhecido. Certifique-se de estar em um dos mares do Blox Fruits. Seu PlaceId: " .. game.PlaceId)
 end
 
 -- Variáveis Globais (_G): Estas variáveis são acessíveis de qualquer parte do script.
@@ -335,13 +335,15 @@ local function StartFarm(farmType, questData)
     end
 
     local LocalPlayer = game:GetService("Players").LocalPlayer
-    if not LocalPlayer or not LocalPlayer:FindFirstChild("Data") or not LocalPlayer.Data:FindFirstChild("Level") then
+    local playerLevel = 0
+    if LocalPlayer and LocalPlayer:FindFirstChild("Data") and LocalPlayer.Data:FindFirstChild("Level") then
+        playerLevel = LocalPlayer.Data.Level.Value
+    else
         warn("[StartFarm] Não foi possível obter o nível do jogador. O objeto 'Data.Level' pode não estar disponível.")
         updateStatusText("Status: Erro (Sem Nível)")
         return
     end
 
-    local playerLevel = LocalPlayer.Data.Level.Value
     print("[StartFarm] Nível do jogador: " .. playerLevel .. ". Requer: " .. questData.MinLevel .. "-" .. questData.MaxLevel) -- Depuração
 
     if playerLevel < questData.MinLevel or playerLevel > questData.MaxLevel then
@@ -512,13 +514,13 @@ spawn(function()
 end)
 
 spawn(function()
-    while wait(5) do
-        for i,v in pairs(game.Players:GetPlayers()) do
-            if v.Name == "red_game43" or v.Name == "rip_indra" or v.Name == "Axiore" or v.Name == "Polkster" or v.Name == "wenlocktoad" or v.Name == "Daigrock" or v.Name == "toilamvidamme" or v.Name == "oofficialnoobie" or v.Name == "Uzoth" or v.Name == "Azarth" or v.Name == "arlthmetic" or v.Name == "Death_King" or v.Name == "Lunoven" or v.Name == "TheGreateAced" or v.Name == "rip_fud" or v.Name == "drip_mama" or v.Name == "layandikit12" or v.Name == "Hingoi" then
-                warn("[Anti-Admin] Admin/Player específico detectado: " .. v.Name .. ". Dando Hop!")
-                Hop()
-                wait(20)
-                break
+    while wait() do
+    for i,v in pairs(game.Players:GetPlayers()) do
+        if v.Name == "red_game43" or v.Name == "rip_indra" or v.Name == "Axiore" or v.Name == "Polkster" or v.Name == "wenlocktoad" or v.Name == "Daigrock" or v.Name == "toilamvidamme" or v.Name == "oofficialnoobie" or v.Name == "Uzoth" or v.Name == "Azarth" or v.Name == "arlthmetic" or v.Name == "Death_King" or v.Name == "Lunoven" or v.Name == "TheGreateAced" or v.Name == "rip_fud" or v.Name == "drip_mama" or v.Name == "layandikit12" or v.Name == "Hingoi" then
+            warn("[Anti-Admin] Admin/Player específico detectado: " .. v.Name .. ". Dando Hop!")
+            Hop()
+            wait(20)
+            break
             end
         end
     end
@@ -707,11 +709,42 @@ local currentYOffset = 0
 local buttonHeight = 30
 local padding = 5
 
+local playerLevel = 0
+if player and player:FindFirstChild("Data") and player.Data:FindFirstChild("Level") then
+    playerLevel = player.Data.Level.Value
+    print("Seu nível inicial detectado (para filtragem da GUI): " .. playerLevel)
+else
+    warn("Não foi possível obter o nível do jogador na inicialização da GUI.")
+end
+
+
 for questName, questData in pairs(QuestDefinitions) do
-    -- Filtra as quests pelo mar atual do jogador
-    if (World1 and questData.MinLevel < 700) or
-       (World2 and questData.MinLevel >= 700 and questData.MinLevel < 1500) or
-       (World3 and questData.MinLevel >= 1500) then
+    -- Filtra as quests pelo mar atual do jogador E pelo nível
+    local shouldDisplay = false
+    if World1 and questData.MinLevel < 700 then
+        -- No Primeiro Mar, mostramos todas as quests do Primeiro Mar
+        shouldDisplay = true
+    elseif World2 and questData.MinLevel >= 700 and questData.MinLevel < 1500 then
+        -- No Segundo Mar, mostramos todas as quests do Segundo Mar
+        shouldDisplay = true
+    elseif World3 and questData.MinLevel >= 1500 then
+        -- No Terceiro Mar, mostramos todas as quests do Terceiro Mar
+        shouldDisplay = true
+    end
+
+    -- Adiciona uma condição adicional para mostrar apenas quests do seu nível aproximado
+    -- Isso evita mostrar 200 botões e torna a GUI mais limpa para jogadores de nível alto.
+    -- Vamos flexibilizar um pouco a faixa para mostrar mais opções ao invés de apenas a exata.
+    if shouldDisplay and playerLevel ~= 0 then -- Apenas filtre se o nível foi lido com sucesso
+        -- Mostra quests que começam até 50 níveis acima do seu nível atual
+        -- E que terminam até 50 níveis abaixo do seu nível atual
+        if not (questData.MinLevel > playerLevel + 50 or questData.MaxLevel < playerLevel - 50) then
+             createQuestButton(questName, questData)
+             currentYOffset = currentYOffset + buttonHeight + padding
+        else
+             print("Botão " .. questData.FarmName .. " filtrado (nível " .. playerLevel .. ") - Min:" .. questData.MinLevel .. " Max:" .. questData.MaxLevel)
+        end
+    elseif shouldDisplay and playerLevel == 0 then -- Se o nível não foi lido, mostre todas do mar correto (fallback)
         createQuestButton(questName, questData)
         currentYOffset = currentYOffset + buttonHeight + padding
     end
@@ -748,12 +781,14 @@ ToggleAutoClickButton.Position = UDim2.new(0.05, 0, 0, AutoClickLabel.Position.Y
 ToggleAutoClickButton.Font = Enum.Font.SourceSansBold
 ToggleAutoClickButton.TextSize = 14
 ToggleAutoClickButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+ToggleAutoClickButton.BackgroundColor3 = Color3.fromRGB(150, 70, 70) -- Começa OFF
+ToggleAutoClickButton.Text = "AutoClick: OFF"
 ToggleAutoClickButton.BorderSizePixel = 0
 ToggleAutoClickButton.Parent = MainFrame
-updateToggleButton(ToggleAutoClickButton, _G.AutoClick) -- Inicializa o estado do botão
 
+-- Adiciona um print para ter certeza que o event listener está sendo conectado
 ToggleAutoClickButton.MouseButton1Click:Connect(function()
-    print("[GUI Click] Botão AutoClick clicado.") -- Depuração
+    print("[GUI Click] ---- Botão AutoClick CLICADO! ----") -- ESTE PRINT É CRÍTICO
     _G.AutoClick = not _G.AutoClick
     updateToggleButton(ToggleAutoClickButton, _G.AutoClick)
     if _G.AutoClick then
@@ -797,9 +832,6 @@ SliderButton.Parent = DelaySlider
 local minDelay = 0.01
 local maxDelay = 1.0
 
--- SliderButton.Draggable = false -- Comentei esta linha pois o draggable já é setado para true acima
--- Removi o código de dragging manual e voltei a usar o Draggable padrão do Roblox,
--- pois ele geralmente funciona melhor e é mais simples para sliders básicos.
 SliderButton.Changed:Connect(function(property)
     if property == "Position" then
         local ratio = SliderButton.Position.X.Offset / (DelaySlider.AbsoluteSize.X - SliderButton.AbsoluteSize.X)
