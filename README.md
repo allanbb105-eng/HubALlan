@@ -17,10 +17,9 @@ elseif game.PlaceId == 4442272183 then -- PlaceId do Segundo Mar
     print("Detectado: Segundo Mar (PlaceId: 4442272183)")
 elseif game.PlaceId == 7449423635 then -- PlaceId do Terceiro Mar
     World3 = true
-    print("Detectado: Terceiro Mar (PlaceId: 7449423635)")
+    print("Detectado: Terceitado: Terceiro Mar (PlaceId: 7449423635)")
 else
-    -- ATENÇÃO: COMENTEI ESTA LINHA PARA EVITAR KICK DURANTE A DEPURACAO.
-    -- game:GetService("Players").LocalPlayer:Kick("Local não suportado. Por favor, entre em um dos mares suportados (Blox Fruits).")
+    -- ATENÇÃO: Se o PlaceId não for reconhecido, apenas avisa e não kikca.
     print("AVISO: PlaceId não reconhecido. Certifique-se de estar em um dos mares do Blox Fruits. Seu PlaceId: " .. game.PlaceId)
 end
 
@@ -60,18 +59,32 @@ function Hop()
 end
 
 function Teleport(cframe)
-    print("[Teleport] Chamado para CFrame: " .. tostring(cframe)) -- Mensagem de depuração
+    print("[Teleport] Chamado para CFrame: " .. tostring(cframe.Position)) -- Mensagem de depuração
     local LocalPlayer = game:GetService("Players").LocalPlayer
-    if LocalPlayer and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-        LocalPlayer.Character.HumanoidRootPart.CFrame = cframe
-        print("[Teleport] Teletransportado para: X=" .. math.floor(cframe.Position.X) .. ", Y=" .. math.floor(cframe.Position.Y) .. ", Z=" .. math.floor(cframe.Position.Z))
-    else
-        warn("[Teleport] HumanoidRootPart do jogador não encontrada para teletransporte. Personagem pode não estar carregado ou você morreu.")
-        -- Adicione uma tentativa de respawn se o personagem não estiver carregado
-        if LocalPlayer and not LocalPlayer.Character then
-            print("[Teleport] Tentando forçar o respawn...")
+    if LocalPlayer and LocalPlayer.Character then
+        local HumanoidRootPart = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        if HumanoidRootPart then
+            HumanoidRootPart.CFrame = cframe
+            print("[Teleport] Teletransportado para: X=" .. math.floor(cframe.Position.X) .. ", Y=" .. math.floor(cframe.Position.Y) .. ", Z=" .. math.floor(cframe.Position.Z))
+            wait(0.7) -- Aumentei o tempo de espera após o teletransporte
+        else
+            warn("[Teleport] HumanoidRootPart do jogador não encontrada. Tentando forçar o respawn.")
             LocalPlayer:LoadCharacter()
             wait(2) -- Tempo para o personagem carregar
+            if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                LocalPlayer.Character.HumanoidRootPart.CFrame = cframe
+                wait(0.7)
+            else
+                warn("[Teleport] Não foi possível teletransportar após respawn forçado.")
+            end
+        end
+    else
+        warn("[Teleport] Personagem do jogador não encontrado para teletransporte. Pode ter morrido ou não carregou.")
+        LocalPlayer:LoadCharacter() -- Tenta forçar o respawn
+        wait(2) -- Tempo para o personagem carregar
+        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            LocalPlayer.Character.HumanoidRootPart.CFrame = cframe
+            wait(0.7)
         end
     end
 end
@@ -84,15 +97,14 @@ function FindMob(name)
     local PlayerHRP = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
 
     if not PlayerHRP then
-        print("[FindMob] Player HumanoidRootPart não encontrado. Não é possível procurar mob.") -- Depuração
+        warn("[FindMob] Player HumanoidRootPart não encontrado. Não é possível procurar mob.")
         return nil
     end
 
     for i, v in pairs(workspace:GetChildren()) do
         if v:IsA("Model") and
            v.Name:find(name, 1, true) and
-           v:FindFirstChild("Humanoid") and
-           v.Humanoid.Health > 0 and
+           v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 and -- Verifica se tem Humanoid e se está vivo
            v:FindFirstChild("HumanoidRootPart") then
 
             local mobHRP = v.HumanoidRootPart
@@ -105,9 +117,9 @@ function FindMob(name)
         end
     end
     if foundMob then
-        print("[FindMob] Mob '" .. name .. "' encontrado: " .. foundMob.Name) -- Depuração
+        print("[FindMob] Mob '" .. name .. "' encontrado: " .. foundMob.Name)
     else
-        print("[FindMob] Nenhum mob '" .. name .. "' encontrado.") -- Depuração
+        print("[FindMob] Nenhum mob '" .. name .. "' encontrado.")
     end
     return foundMob
 end
@@ -117,11 +129,12 @@ function AttackTarget(target)
     local PlayerHRP = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
 
     if not (PlayerHRP and target and target:FindFirstChild("HumanoidRootPart") and target:FindFirstChild("Humanoid") and target.Humanoid.Health > 0) then
-        print("[AttackTarget] Condições de ataque não atendidas (PlayerHRP ou alvo inválido/morto).") -- Depuração
+        -- print("[AttackTarget] Condições de ataque não atendidas (PlayerHRP ou alvo inválido/morto).") -- Depuração
         return
     end
 
     PlayerHRP.CFrame = CFrame.new(PlayerHRP.Position, target.HumanoidRootPart.Position)
+    wait(0.1) -- Pequeno delay para rotação
 
     local ReplicatedStorage = game:GetService("ReplicatedStorage")
     local AttackRemote = nil
@@ -129,31 +142,30 @@ function AttackTarget(target)
 
     -- TENTATIVAS DE ENCONTRAR O REMOTE EVENT DE ATAQUE (MAIS COMUNS NO BLOX FRUITS)
     -- *** ISTO É CRÍTICO! USE UM REMOTE SPY SE NÃO ESTIVER FUNCIONANDO! ***
-    AttackRemote = ReplicatedStorage:FindFirstChild("Remote")
-    if AttackRemote and AttackRemote:IsA("RemoteEvent") then
-        AttackRemote:FireServer("Attack", target.HumanoidRootPart) -- Argumentos comuns para ataque M1
-        print("[Attack] Tentativa via 'Remote' com 'Attack'.") -- Depuração
-        attackSucceeded = true
-        wait(0.2)
-    end
+    local remotes = {
+        {"Remote", "Attack", target.HumanoidRootPart}, -- Ex: Remote:FireServer("Attack", mobHRP)
+        {"Events", "Attack", target.HumanoidRootPart}, -- Ex: Events.Attack:FireServer(mobHRP)
+        {"CombatEvents", "Damage", target.HumanoidRootPart, "M1"} -- Ex: CombatEvents.Damage:FireServer(mobHRP, "M1")
+    }
 
-    if not attackSucceeded then
-        AttackRemote = ReplicatedStorage:FindFirstChild("Events") and ReplicatedStorage.Events:FindFirstChild("Attack")
-        if AttackRemote and AttackRemote:IsA("RemoteEvent") then
-            AttackRemote:FireServer(target.HumanoidRootPart) -- Outros argumentos comuns
-            print("[Attack] Tentativa via 'Events.Attack'.") -- Depuração
-            attackSucceeded = true
-        wait(0.2)
-        end
-    end
-
-    if not attackSucceeded then
-        AttackRemote = ReplicatedStorage:FindFirstChild("CombatEvents") and ReplicatedStorage.CombatEvents:FindFirstChild("Damage")
-        if AttackRemote and AttackRemote:IsA("RemoteEvent") then
-            AttackRemote:FireServer(target.HumanoidRootPart, "M1") -- Outros argumentos comuns
-            print("[Attack] Tentativa via 'CombatEvents.Damage'.") -- Depuração
-            attackSucceeded = true
-            wait(0.2)
+    for _, data in ipairs(remotes) do
+        local folderName, remoteName = data[1], data[2]
+        local folder = ReplicatedStorage:FindFirstChild(folderName)
+        if folder then
+            AttackRemote = folder:FindFirstChild(remoteName)
+            if AttackRemote and AttackRemote:IsA("RemoteEvent") then
+                if folderName == "Remote" and remoteName == "Attack" then
+                    AttackRemote:FireServer("Attack", data[3])
+                elseif folderName == "Events" and remoteName == "Attack" then
+                    AttackRemote:FireServer(data[3])
+                elseif folderName == "CombatEvents" and remoteName == "Damage" then
+                    AttackRemote:FireServer(data[3], data[4])
+                end
+                print("[Attack] Tentativa via '" .. folderName .. "." .. remoteName .. "'.")
+                attackSucceeded = true
+                wait(0.2)
+                break
+            end
         end
     end
 
@@ -167,47 +179,45 @@ function AttackTarget(target)
 end
 
 function InteractWithNPC(npcName, cframe)
-    print("[InteractWithNPC] Chamado para NPC: " .. npcName) -- Depuração
+    print("[InteractWithNPC] Chamado para NPC: " .. npcName)
     local npc = game:GetService("Workspace"):FindFirstChild(npcName)
     if npc and npc:IsA("Model") and npc:FindFirstChild("HumanoidRootPart") then
         local LocalPlayer = game:GetService("Players").LocalPlayer
         local PlayerHRP = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
 
         if PlayerHRP then
-            Teleport(cframe or npc.HumanoidRootPart.CFrame * CFrame.new(0, 0, 5)) -- Usar CFrame fornecida ou calcular uma próxima
+            Teleport(cframe or npc.HumanoidRootPart.CFrame * CFrame.new(0, 0, 5))
             wait(1.5)
 
             local ReplicatedStorage = game:GetService("ReplicatedStorage")
             local InteractRemote = nil
             local interactionSucceeded = false
 
-            -- TENTATIVAS DE ENCONTRAR O REMOTE EVENT DE INTERAÇÃO COM NPC (MAIS COMUNS NO BLOX FRUITS)
-            -- *** ISTO É CRÍTICO! USE UM REMOTE SPY SE NÃO ESTIVER FUNCIONANDO! ***
-            InteractRemote = ReplicatedStorage:FindFirstChild("Remote")
-            if InteractRemote and InteractRemote:IsA("RemoteEvent") then
-                InteractRemote:FireServer("Quest", npc.Name)
-                print("[NPC Interaction] Tentativa via 'Remote' com 'Quest'.") -- Depuração
-                interactionSucceeded = true
-                wait(0.5)
-            end
+            -- TENTATIVAS DE ENCONTRAR O REMOTE EVENT DE INTERAÇÃO COM NPC
+            local remotes = {
+                {"Remote", "Quest", npc.Name},
+                {"Remote", "Evt", npc.Name, "Click"},
+                {"Events", "Interact", npc.Name, "Quest"}
+            }
 
-            if not interactionSucceeded then
-                InteractRemote = ReplicatedStorage:FindFirstChild("Remote")
-                if InteractRemote and InteractRemote:IsA("RemoteEvent") then
-                    InteractRemote:FireServer("Evt", npc.Name, "Click")
-                    print("[NPC Interaction] Tentativa via 'Remote' com 'Evt', 'Click'.") -- Depuração
-                    interactionSucceeded = true
-                    wait(0.5)
-                end
-            end
-
-            if not interactionSucceeded then
-                InteractRemote = ReplicatedStorage:FindFirstChild("Events") and ReplicatedStorage.Events:FindFirstChild("Interact")
-                if InteractRemote and InteractRemote:IsA("RemoteEvent") then
-                    InteractRemote:FireServer(npc.Name, "Quest")
-                    print("[NPC Interaction] Tentativa via 'Events.Interact'.") -- Depuração
-                    interactionSucceeded = true
-                    wait(0.5)
+            for _, data in ipairs(remotes) do
+                local folderName, remoteName = data[1], data[2]
+                local folder = ReplicatedStorage:FindFirstChild(folderName)
+                if folder then
+                    InteractRemote = folder:FindFirstChild(remoteName)
+                    if InteractRemote and InteractRemote:IsA("RemoteEvent") then
+                        if folderName == "Remote" and remoteName == "Quest" then
+                            InteractRemote:FireServer("Quest", data[3])
+                        elseif folderName == "Remote" and remoteName == "Evt" then
+                            InteractRemote:FireServer("Evt", data[3], data[4])
+                        elseif folderName == "Events" and remoteName == "Interact" then
+                            InteractRemote:FireServer(data[3], data[4])
+                        end
+                        print("[NPC Interaction] Tentativa via '" .. folderName .. "." .. remoteName .. "'.")
+                        interactionSucceeded = true
+                        wait(0.5)
+                        break
+                    end
                 end
             end
 
@@ -228,7 +238,7 @@ end
 
 -- Função genérica de farm para ser usada por cada nível específico
 local function runFarmCycle(questData)
-    print("[runFarmCycle] Iniciando ciclo para: " .. questData.FarmName) -- Depuração
+    print("[runFarmCycle] Iniciando ciclo para: " .. (questData.FarmName or "Quest Desconhecida"))
     local mobName = questData.Mon
     local questNPCName = questData.NPCName
     local questCFrame = questData.CFrameQuest
@@ -236,6 +246,16 @@ local function runFarmCycle(questData)
     local mobsToKill = questData.MobsToKill or 5 -- Padrão de 5 mobs por quest
 
     print("\n--- Ciclo de Farm para Quest: " .. (questData.NameQuest or "Desconhecida") .. " ---")
+
+    local LocalPlayer = game:GetService("Players").LocalPlayer
+    local PlayerHRP = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+
+    if not PlayerHRP then
+        warn("[runFarmCycle] Personagem ou HumanoidRootPart não encontrados. Tentando respawn e pulando ciclo.")
+        LocalPlayer:LoadCharacter()
+        wait(2)
+        return
+    end
 
     -- 1. Aceitar/Completar Quest (se _G.AutoQuest estiver ativado)
     if _G.AutoQuest and questNPCName and questCFrame then
@@ -247,7 +267,7 @@ local function runFarmCycle(questData)
     elseif _G.AutoQuest then
         warn("[AutoQuest] Não foi possível interagir com o NPC da quest. Verifique NPCName e CFrameQuest.")
     else
-        print("[AutoQuest] AutoQuest desativado. Pulando interação com NPC.") -- Depuração
+        print("[AutoQuest] AutoQuest desativado. Pulando interação com NPC.")
     end
 
     -- 2. Teletransportar para o local de spawn dos monstros
@@ -260,6 +280,8 @@ local function runFarmCycle(questData)
         local attemptCount = 0
 
         while mobsKilled < mobsToKill and _G.CurrentFarmActive and _G.FarmType == questData.FarmName and attemptCount < (mobsToKill * 20) do
+            if not _G.CurrentFarmActive then break end -- Verificação de parada
+
             _G.TargetMob = FindMob(mobName)
 
             if _G.TargetMob then
@@ -269,20 +291,22 @@ local function runFarmCycle(questData)
                 end
 
                 local attackAttempts = 0
-                local LocalPlayer = game:GetService("Players").LocalPlayer
+                -- Loop enquanto o mob estiver vivo e o farm ativo
                 while _G.TargetMob and _G.TargetMob:FindFirstChild("Humanoid") and _G.TargetMob.Humanoid.Health > 0 and attackAttempts < 50 and _G.CurrentFarmActive do
-                    if _G.AutoAttack then
-                        AttackTarget(_G.TargetMob)
-                    end
-                    wait(0.2)
-                    attackAttempts = attackAttempts + 1
+                    if not _G.AutoAttack then break end -- Se AutoAttack for desativado no meio
+                    if not _G.CurrentFarmActive then break end -- Se farm for desativado no meio
+
                     if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") and _G.TargetMob:FindFirstChild("HumanoidRootPart") then
+                        -- Se o jogador estiver muito longe, teletransporta para perto
                         if (LocalPlayer.Character.HumanoidRootPart.Position - _G.TargetMob.HumanoidRootPart.Position).magnitude > 20 then
-                            print("[Farm] Jogador muito longe do alvo. Teletransportando para mais perto.") -- Depuração
+                            print("[Farm] Jogador muito longe do alvo. Teletransportando para mais perto.")
                             Teleport(_G.TargetMob.HumanoidRootPart.CFrame * CFrame.new(0,0,5))
                             wait(0.5)
                         end
                     end
+                    AttackTarget(_G.TargetMob) -- Re-ataque
+                    wait(0.2)
+                    attackAttempts = attackAttempts + 1
                 end
 
                 if not _G.TargetMob or not _G.TargetMob:FindFirstChild("Humanoid") or _G.TargetMob.Humanoid.Health <= 0 then
@@ -292,7 +316,7 @@ local function runFarmCycle(questData)
                     wait(0.5)
                 else
                     warn("[Farm] Monstro '" .. mobName .. "' não derrotado ou problema no alvo. Buscando próximo. Saúde restante: " .. (_G.TargetMob.Humanoid.Health or "Desconhecido"))
-                    _G.TargetMob = nil
+                    _G.TargetMob = nil -- Reseta o alvo para buscar um novo
                 end
             else
                 print("[Farm] Nenhum monstro '" .. mobName .. "' encontrado. Esperando o spawn ou procurando novamente...")
@@ -306,6 +330,9 @@ local function runFarmCycle(questData)
             print("[Farm] Mobs suficientes derrotados (" .. mobsKilled .. "/" .. mobsToKill .. ") para a quest de " .. mobName .. ".")
         else
             warn("[Farm] Não foi possível derrotar todos os mobs para a quest atual. Abatidos: " .. mobsKilled .. ". Verifique se as CFrames e os nomes dos mobs estão corretos ou se os remotes de ataque estão funcionando.")
+            if _G.CurrentFarmActive then -- Se o farm ainda está ativo, mas falhou, talvez tente novamente
+                print("[Farm] Tentando novamente o ciclo de farm...")
+            end
         end
     else
         warn("[Farm] Não foi possível iniciar o farm de mobs. Verifique o nome do monstro e a CFrame de spawn.")
@@ -322,13 +349,13 @@ local function runFarmCycle(questData)
         warn("[AutoQuest] Não foi possível entregar a quest. Verifique NPCName e CFrameQuest.")
     end
 
-    print("[runFarmCycle] Ciclo concluído para: " .. questData.FarmName) -- Depuração
-    wait(2)
+    print("[runFarmCycle] Ciclo concluído para: " .. (questData.FarmName or "Quest Desconhecida"))
+    wait(2) -- Pequeno delay entre os ciclos de quest
 end
 
 -- Função para iniciar qualquer farm
 local function StartFarm(farmType, questData)
-    print("[StartFarm] Tentando iniciar: " .. farmType) -- Depuração
+    print("[StartFarm] Tentando iniciar: " .. farmType)
     if _G.CurrentFarmActive then
         warn("[StartFarm] Já existe um auto farm ativo (" .. _G.FarmType .. "). Por favor, pare o farm atual antes de iniciar um novo.")
         return
@@ -344,7 +371,7 @@ local function StartFarm(farmType, questData)
         return
     end
 
-    print("[StartFarm] Nível do jogador: " .. playerLevel .. ". Requer: " .. questData.MinLevel .. "-" .. questData.MaxLevel) -- Depuração
+    print("[StartFarm] Nível do jogador: " .. playerLevel .. ". Requer: " .. questData.MinLevel .. "-" .. questData.MaxLevel)
 
     if playerLevel < questData.MinLevel or playerLevel > questData.MaxLevel then
         print("[StartFarm] Nível do jogador (" .. playerLevel .. ") fora da faixa para " .. farmType .. " (" .. questData.MinLevel .. "-" .. questData.MaxLevel .. ").")
@@ -361,7 +388,7 @@ local function StartFarm(farmType, questData)
     print("====================================")
 
     autoFarmThread = spawn(function()
-        print("[AutoFarmThread] Thread de farm iniciada para: " .. farmType) -- Depuração
+        print("[AutoFarmThread] Thread de farm iniciada para: " .. farmType)
         while _G.CurrentFarmActive and _G.FarmType == farmType do -- Garante que o loop só rode para o farm selecionado
             runFarmCycle(questData)
             if not _G.CurrentFarmActive then -- Verificação adicional para sair do loop se parado durante o ciclo
@@ -369,7 +396,7 @@ local function StartFarm(farmType, questData)
             end
             wait(0.5) -- Pequeno delay para evitar sobrecarga
         end
-        print("[AutoFarmThread] Loop de farm encerrado para: " .. farmType) -- Depuração
+        print("[AutoFarmThread] Loop de farm encerrado para: " .. farmType)
         print("====================================")
         print("          " .. farmType .. " PARADO.         ")
         print("====================================")
@@ -383,7 +410,7 @@ end
 
 -- Função para parar qualquer farm ativo
 function StopFarm()
-    print("[StopFarm] Chamado.") -- Depuração
+    print("[StopFarm] Chamado.")
     if not _G.CurrentFarmActive then
         print("Nenhum auto farm está ativo para parar.")
         return
@@ -399,7 +426,7 @@ end
 -- =====================================================================================================
 
 local function StartAutoClick()
-    print("[StartAutoClick] Chamado.") -- Depuração
+    print("[StartAutoClick] Chamado.")
     if autoClickThread then
         print("[AutoClick] Auto Click já está em execução.")
         return
@@ -411,7 +438,7 @@ local function StartAutoClick()
     print("====================================")
 
     autoClickThread = spawn(function()
-        print("[AutoClickThread] Thread de Auto Click iniciada.") -- Depuração
+        print("[AutoClickThread] Thread de Auto Click iniciada.")
         local mouse = game:GetService("Players").LocalPlayer:GetService("Mouse")
         while _G.AutoClick do
             -- print("[AutoClickThread] Clicando...") -- CUIDADO: pode gerar muitos logs se descomentado
@@ -420,7 +447,7 @@ local function StartAutoClick()
             mouse.Button1Up:fire()
             wait(_G.AutoClickDelay)
         end
-        print("[AutoClickThread] Loop de Auto Click encerrado.") -- Depuração
+        print("[AutoClickThread] Loop de Auto Click encerrado.")
         print("====================================")
         print("          Auto Click PARADO.        ")
         print("====================================")
@@ -429,7 +456,7 @@ local function StartAutoClick()
 end
 
 local function StopAutoClick()
-    print("[StopAutoClick] Chamado.") -- Depuração
+    print("[StopAutoClick] Chamado.")
     _G.AutoClick = false
     print("[Controle] Sinal para parar Auto Click enviado.")
 end
@@ -677,7 +704,7 @@ UIListLayout.Parent = LevelButtonsFrame
 
 -- Função para criar um botão de quest dinamicamente
 local function createQuestButton(questName, questData)
-    print("[createQuestButton] Tentando criar botão para: " .. questData.FarmName) -- ADICIONADO PARA DEPURAR
+    print("[createQuestButton] Tentando criar botão para: " .. questData.FarmName)
     local button = Instance.new("TextButton")
     button.Name = questData.FarmName or questName .. "FarmButton"
     button.Size = UDim2.new(0.9, 0, 0, 30)
@@ -690,7 +717,7 @@ local function createQuestButton(questName, questData)
     button.Parent = LevelButtonsFrame
 
     button.MouseButton1Click:Connect(function()
-        print("[GUI Click] Botão " .. button.Name .. " clicado.") -- Depuração
+        print("[GUI Click] Botão " .. button.Name .. " clicado.")
         if _G.CurrentFarmActive then
             if _G.FarmType == questData.FarmName then
                 StopFarm() -- Se já está ativo para esta quest, para
@@ -790,7 +817,7 @@ ToggleAutoClickButton.Parent = MainFrame
 
 -- Adiciona um print para ter certeza que o event listener está sendo conectado
 ToggleAutoClickButton.MouseButton1Click:Connect(function()
-    print("[GUI Click] ---- Botão AutoClick CLICADO! ----") -- ESTE PRINT É CRÍTICO
+    print("[GUI Click] ---- Botão AutoClick CLICADO! ----")
     _G.AutoClick = not _G.AutoClick
     updateToggleButton(ToggleAutoClickButton, _G.AutoClick)
     if _G.AutoClick then
@@ -857,7 +884,7 @@ StopAllFarmButton.BorderSizePixel = 0
 StopAllFarmButton.Parent = MainFrame
 
 StopAllFarmButton.MouseButton1Click:Connect(function()
-    print("[GUI Click] Botão Stop All Farm clicado.") -- Depuração
+    print("[GUI Click] Botão Stop All Farm clicado.")
     StopFarm()
     StopAutoClick() -- Garante que o auto click também pare
     updateStatusText("Status: Inativo")
