@@ -1,4 +1,4 @@
--- Informações sobre o mundo (PlaceId de Blox Fruits)
+-- Verifica o PlaceId para determinar o mundo
 local World1 = false
 local World2 = false
 local World3 = false
@@ -86,20 +86,24 @@ function AttackTarget(target)
     PlayerHRP.CFrame = CFrame.new(PlayerHRP.Position, target.HumanoidRootPart.Position)
 
     local ReplicatedStorage = game:GetService("ReplicatedStorage")
-    -- *** IMPORTANTE: Verifique o nome do RemoteEvent de ataque em Blox Fruits com um Remote Spy! ***
-    -- "Remote" é um nome comum, mas pode ser diferente (ex: "Events.Attack", "CombatEvents.Damage")
-    local AttackRemote = ReplicatedStorage:FindFirstChild("Remote")
+    -- *** TENTATIVAS DE REMOTE EVENTS PARA ATAQUE (M1) ***
+    -- Tente estas variações. O Remote Spy dirá qual é a correta.
+    local AttackRemote = ReplicatedStorage:FindFirstChild("Remote") -- Nome comum
+    if not AttackRemote then AttackRemote = ReplicatedStorage:FindFirstChild("Events") and ReplicatedStorage.Events:FindFirstChild("Attack") end
+    if not AttackRemote then AttackRemote = ReplicatedStorage:FindFirstChild("CombatEvents") and ReplicatedStorage.CombatEvents:FindFirstChild("Damage") end
+    -- Adicione outras variações se o Remote Spy mostrar nomes diferentes!
 
     if AttackRemote and AttackRemote:IsA("RemoteEvent") then
-        -- *** ARGUMENTOS: Os argumentos também são CRÍTICOS e devem ser os que o jogo espera! ***
-        -- Para ataques básicos (M1), geralmente é o alvo (HumanoidRootPart).
-        -- Para habilidades (fruta/espada/estilo), pode ser o nome da habilidade/ID e o alvo.
-        AttackRemote:FireServer("Attack", target.HumanoidRootPart) -- Exemplo comum para ataque básico (M1)
-        -- Exemplo se fosse uma habilidade: AttackRemote:FireServer("Ability", "NomeDaHabilidade", target.HumanoidRootPart)
-        -- Exemplo para Blox Fruits: AttackRemote:FireServer("Skill", "Z_ABILITY", target.HumanoidRootPart)
-        print("[Attack] Atacando via RemoteEvent: " .. target.Name)
+        -- *** ARGUMENTOS PARA ATAQUE (M1) ***
+        -- Estes são exemplos comuns para Blox Fruits. O Remote Spy é a fonte final da verdade.
+        AttackRemote:FireServer("Attack", target.HumanoidRootPart) -- Variação 1 (muito comum)
+        -- AttackRemote:FireServer("DoDamage", target.HumanoidRootPart, "M1") -- Variação 2
+        -- AttackRemote:FireServer(target.HumanoidRootPart) -- Variação 3 (apenas o alvo)
+        -- AttackRemote:FireServer("Hit", target) -- Variação 4
+
+        print("[Attack] Tentando atacar via RemoteEvent: " .. target.Name)
     else
-        warn("[Attack] Remote de ataque 'Remote' não encontrado ou inválido! Atacando via clique do mouse (pode não dar dano).")
+        warn("[Attack] Remote de ataque não encontrado ou inválido! Atacando via clique do mouse (pode não dar dano).")
         -- Fallback: Simula um clique do mouse (provavelmente não dará dano real em Blox Fruits)
         game:GetService("Players").LocalPlayer:GetService("Mouse").Button1Down:fire()
         wait(0.1)
@@ -193,22 +197,25 @@ function InteractWithNPC(npcName)
             wait(0.5)
 
             local ReplicatedStorage = game:GetService("ReplicatedStorage")
-            -- *** IMPORTANTE: Verifique o nome do RemoteEvent de interação em Blox Fruits com um Remote Spy! ***
-            -- "Remote" é um nome comum, mas pode ser "Events.Interact", "QuestHandler", etc.
-            local InteractRemote = ReplicatedStorage:FindFirstChild("Remote")
+            -- *** TENTATIVAS DE REMOTE EVENTS PARA INTERAÇÃO COM NPC ***
+            -- Tente estas variações. O Remote Spy dirá qual é a correta.
+            local InteractRemote = ReplicatedStorage:FindFirstChild("Remote") -- Nome comum
+            if not InteractRemote then InteractRemote = ReplicatedStorage:FindFirstChild("Events") and ReplicatedStorage.Events:FindFirstChild("Interact") end
+            if not InteractRemote then InteractRemote = ReplicatedStorage:FindFirstChild("QuestHandler") and ReplicatedStorage.QuestHandler:FindFirstChild("AcceptQuest") end
+            -- Adicione outras variações se o Remote Spy mostrar nomes diferentes!
 
             if InteractRemote and InteractRemote:IsA("RemoteEvent") then
-                -- *** ARGUMENTOS: Os argumentos devem ser os que o jogo espera para aceitar/entregar quests! ***
-                -- Exemplo comum para Blox Fruits:
-                InteractRemote:FireServer("Quest", npc.Name) -- Tenta essa primeiro
-                -- Se não funcionar, tente simular um clique no NPC (muito comum em Blox Fruits):
-                -- InteractRemote:FireServer("Evt", npc.Name, "Click")
-                -- Ou tente algo mais específico que encontrar no Remote Spy:
-                -- InteractRemote:FireServer("AcceptQuest", npc.Name, "QuestName")
-                -- InteractRemote:FireServer("CompleteQuest", npc.Name)
+                -- *** ARGUMENTOS PARA INTERAÇÃO COM NPC ***
+                -- Estes são exemplos comuns para Blox Fruits. O Remote Spy é a fonte final da verdade.
+                InteractRemote:FireServer("Quest", npc.Name) -- Variação 1 (muito comum para quests)
+                -- InteractRemote:FireServer("Evt", npc.Name, "Click") -- Variação 2 (simula clique no NPC)
+                -- InteractRemote:FireServer("Talk", npc.Name) -- Variação 3
+                -- InteractRemote:FireServer("Accept", questData.NameQuest, npc.Name) -- Variação 4 (se o nome da quest for argumento)
+                -- InteractRemote:FireServer("Complete", npc.Name) -- Variação 5 (para entregar)
+                
                 print("[NPC Interaction] Tentando interagir com NPC: " .. npc.Name)
             else
-                warn("[NPC Interaction] Remote de interação 'Remote' não encontrado ou inválido! A interação com o NPC pode não funcionar.")
+                warn("[NPC Interaction] Remote de interação não encontrado ou inválido! A interação com o NPC pode falhar.")
             end
             wait(0.5)
         end
@@ -237,8 +244,8 @@ function StartAutoFarm()
         while _G.AutoFarm do
             local questData = CheckQuest()
 
-            if not questData.Mon then
-                warn("Nenhuma quest encontrada para o seu nível atual ou dados incompletos. Verifique a função CheckQuest(). Parando Auto Farm.")
+            if not questData.Mon or not questData.CFrameQuest or not questData.CFrameMon then
+                warn("Nenhuma quest encontrada para o seu nível atual ou dados de CFrame incompletos. Verifique a função CheckQuest(). Parando Auto Farm.")
                 StopAutoFarm()
                 break
             end
@@ -269,7 +276,7 @@ function StartAutoFarm()
             local mobsKilled = 0
             local attemptCount = 0 -- Contador de tentativas para evitar loops infinitos caso o mob não apareça
 
-            while mobsKilled < mobsToKill and _G.AutoFarm and attemptCount < (mobsToKill * 10) do -- Limita tentativas
+            while mobsKilled < mobsToKill and _G.AutoFarm and attemptCount < (mobsToKill * 20) do -- Limita tentativas de encontrar mob
                 _G.TargetMob = FindMob(mobName)
 
                 if _G.TargetMob then
@@ -279,14 +286,14 @@ function StartAutoFarm()
                     end
                     
                     local attackAttempts = 0
-                    while _G.TargetMob and _G.TargetMob:FindFirstChild("Humanoid") and _G.TargetMob.Humanoid.Health > 0 and attackAttempts < 30 and _G.AutoFarm do
+                    while _G.TargetMob and _G.TargetMob:FindFirstChild("Humanoid") and _G.TargetMob.Humanoid.Health > 0 and attackAttempts < 50 and _G.AutoFarm do -- Limita tentativas de ataque
                         if _G.AutoAttack then
                             AttackTarget(_G.TargetMob)
                         end
                         wait(0.2) -- Pequeno delay entre ataques
                         attackAttempts = attackAttempts + 1
                         -- Se o alvo estiver muito longe após um teleporte, tenta se reaproximar
-                        if (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - _G.TargetMob.HumanoidRootPart.Position).magnitude > 20 then
+                        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") and _G.TargetMob:FindFirstChild("HumanoidRootPart") and (LocalPlayer.Character.HumanoidRootPart.Position - _G.TargetMob.HumanoidRootPart.Position).magnitude > 20 then
                             Teleport(_G.TargetMob.HumanoidRootPart.CFrame * CFrame.new(0,0,5)) -- Teleporta para perto do alvo
                             wait(0.5) -- Espera um pouco após o re-teleporte
                         end
@@ -310,7 +317,7 @@ function StartAutoFarm()
             end
 
             if mobsKilled >= mobsToKill then
-                print("[Farm] Mobs suficientes derrotados (" .. mobsKilled .. "/" .. mobsToKill .. ") para a quest de " .. mobName .. ".")
+                print("[Farm] Mobs suficientes derrotados (" .. mobsKilled .. "/" .. mobsToKill .. ") para a quest de " .. mobName + ".")
             else
                 warn("[Farm] Não foi possível derrotar todos os mobs para a quest atual. Abatidos: " .. mobsKilled .. ". Verifique se as CFrames e os nomes dos mobs estão corretos ou se os remotes de ataque estão funcionando.")
             end
@@ -341,7 +348,7 @@ function StopAutoFarm()
     updateStatusText("Status: Inativo") -- Atualiza a GUI
 end
 
--- --- THREADS E LISTENERS SECUNDÁRIOS (Originalmente do seu script ou aprimorados) ---
+-- --- THREADS E LISTENERS SECUNDÁRIOS ---
 
 -- Thread para remover efeitos de morte (para melhor visibilidade)
 spawn(function()
@@ -393,17 +400,17 @@ local coreGui = game:GetService("CoreGui") -- Geralmente o local para criar GUIs
 -- Cria a ScreenGui
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "AutoFarmGUI"
-ScreenGui.Parent = coreGui -- Parent no CoreGui para ser visível mesmo em jogos (para exploits)
-ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling -- Garante que a GUI fique por cima de outras
+ScreenGui.Parent = coreGui
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
 -- Cria o Frame principal
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 220, 0, 180) -- Largura, Altura (Aumentado para mais espaço)
-MainFrame.Position = UDim2.new(0.5, -110, 0.5, -90) -- Centraliza na tela
+MainFrame.Size = UDim2.new(0, 220, 0, 180)
+MainFrame.Position = UDim2.new(0.5, -110, 0.5, -90)
 MainFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 MainFrame.BorderSizePixel = 0
-MainFrame.Draggable = true -- Permite arrastar o frame
+MainFrame.Draggable = true
 MainFrame.Parent = ScreenGui
 
 -- Título
@@ -544,8 +551,6 @@ ExitButton.Parent = MainFrame
 ExitButton.MouseButton1Click:Connect(function()
     StopAutoFarm() -- Garante que o auto-farm pare
     ScreenGui:Destroy() -- Remove a GUI
-    -- Tenta parar o script (isso pode variar dependendo do executor)
-    -- Em alguns executores, você pode precisar de um comando como `script:Destroy()` ou `self:Destroy()`
     warn("Script de Auto Farm finalizado e GUI destruída.")
 end)
 
