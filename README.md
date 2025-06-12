@@ -8,6 +8,43 @@ FlowerESP = false
 RealFruitESP = false
 _G.AutoFarm = false
 
+-- GUI simples para controle de ESPs
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "ScriptControlGui"
+ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+
+local Frame = Instance.new("Frame")
+Frame.Size = UDim2.new(0, 200, 0, 200)
+Frame.Position = UDim2.new(0, 10, 0.5, -100)
+Frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+Frame.BorderSizePixel = 0
+Frame.Parent = ScreenGui
+
+local function createToggleButton(name, posY, callback)
+    local Button = Instance.new("TextButton")
+    Button.Text = name
+    Button.Size = UDim2.new(1, -10, 0, 30)
+    Button.Position = UDim2.new(0, 5, 0, posY)
+    Button.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    Button.TextColor3 = Color3.new(1, 1, 1)
+    Button.Font = Enum.Font.GothamBold
+    Button.TextSize = 14
+    Button.Parent = Frame
+
+    local state = false
+    Button.MouseButton1Click:Connect(function()
+        state = not state
+        callback(state)
+        Button.Text = name .. ": " .. (state and "ON" or "OFF")
+    end)
+end
+
+createToggleButton("Island ESP", 10, function(state) IslandESP = state end)
+createToggleButton("Player ESP", 45, function(state) ESPPlayer = state end)
+createToggleButton("Chest ESP", 80, function(state) ChestESP = state end)
+createToggleButton("DevilFruit ESP", 115, function(state) DevilFruitESP = state end)
+createToggleButton("Flower ESP", 150, function(state) FlowerESP = state end)
+
 -- Verifica o mundo atual
 if game.PlaceId == 2753915549 then
     World1 = true
@@ -88,11 +125,3 @@ function UpdatePlayerChams()
         end)
     end
 end
-
--- Adicione outras funções aqui conforme as correções
--- Certifique-se de aplicar comparações com >= e <= para os níveis
--- Substitua todos os FontSize incorretos por TextSize
--- Valide objetos com FindFirstChild antes de acessar
-
--- O resto das funções (Hop, ESPs, etc.) devem seguir a mesma lógica de segurança e correção
--- Se quiser que eu reescreva tudo, posso continuar aqui.
