@@ -1,4 +1,4 @@
--- ALLAN HUB - PARTE 1: Núcleo com GUI e Funções Gerais
+-- ALLAN HUB – Script com Auto Quest, Auto Farm e Auto Fruit
 
 local ScreenGui = Instance.new("ScreenGui")
 local Toggle = Instance.new("TextButton")
@@ -27,13 +27,11 @@ ModeToggle.Text = "Modo: BodyPosition"
 ModeToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
 ModeToggle.TextSize = 18
 
--- Variáveis de controle
 _G.AutoFarm = false
 _G.UseTeleport = false
 _G.Weapon = "Combat"
 _G.AutoFruit = true
 
--- Botões de interação
 Toggle.MouseButton1Click:Connect(function()
     _G.AutoFarm = not _G.AutoFarm
     Toggle.Text = _G.AutoFarm and "Desativar Allan Hub" or "Ativar Allan Hub"
@@ -44,7 +42,6 @@ ModeToggle.MouseButton1Click:Connect(function()
     ModeToggle.Text = _G.UseTeleport and "Modo: Teleporte" or "Modo: BodyPosition"
 end)
 
--- Funções utilitárias
 function TP(pos)
     if typeof(pos) ~= "CFrame" then return end
     local hrp = game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
@@ -68,14 +65,12 @@ end
 
 function Attack()
     local Combat
-    local success = pcall(function()
+    pcall(function()
         Combat = require(game.Players.LocalPlayer.PlayerScripts:FindFirstChild("CombatFramework"))
     end)
-    if success and Combat and Combat.activeController and Combat.activeController.equipped then
+    if Combat and Combat.activeController and Combat.activeController.equipped then
         for i = 1, 3 do
-            pcall(function()
-                Combat.activeController:attack()
-            end)
+            pcall(function() Combat.activeController:attack() end)
             wait(0.05)
         end
     else
@@ -83,19 +78,9 @@ function Attack()
     end
 end
 
-function MagnetMobs(center)
-    for _, mob in pairs(workspace.Enemies:GetChildren()) do
-        if mob:FindFirstChild("HumanoidRootPart") and mob:FindFirstChild("Humanoid") and mob.Humanoid.Health > 0 then
-            pcall(function()
-                mob.HumanoidRootPart.CFrame = CFrame.new(center + Vector3.new(math.random(-3, 3), 0, math.random(-3, 3)))
-            end)
-        end
-    end
-end
-
 function StickToMob(target)
     local hrp = game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-    if not (hrp and target and target:IsA("BasePart")) then return end
+    if not (hrp and target) then return end
     local bp = hrp:FindFirstChild("AllanStick") or Instance.new("BodyPosition")
     bp.Name = "AllanStick"
     bp.MaxForce = Vector3.new(1e5, 1e5, 1e5)
@@ -113,12 +98,11 @@ function ClearStick()
     end
 end
 
--- Coleta automática de frutas
 function ColetarFrutas()
     for _, fruit in pairs(workspace:GetDescendants()) do
         if fruit:IsA("Tool") and fruit:FindFirstChild("Handle") then
-            local frutaNome = fruit.Name:lower()
-            if frutaNome:match("fruit") or frutaNome:match("blox") then
+            local nome = fruit.Name:lower()
+            if nome:match("fruit") or nome:match("blox") then
                 pcall(function()
                     game.Players.LocalPlayer.Character.Humanoid:EquipTool(fruit)
                     fruit.Handle.CFrame = game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame
@@ -137,14 +121,14 @@ spawn(function()
         wait(10)
     end
 end)
+
+-- Variáveis da missão
+NameMon, LevelQuest, NameQuest, CFrameQuest, CFrameMon = nil, nil, nil, nil, nil
+
 function CheckQuest()
-    local player = game.Players.LocalPlayer
-    local level = player:FindFirstChild("Data") and player.Data:FindFirstChild("Level") and player.Data.Level.Value or 1
-    local placeId = game.PlaceId
-    local World1 = placeId == 2753915549
-    local World2 = placeId == 4442272183
-    local World3 = placeId == 7449423635
-    if World1 then
+    local level = game.Players.LocalPlayer:FindFirstChild("Data") and game.Players.LocalPlayer.Data:FindFirstChild("Level") and game.Players.LocalPlayer.Data.Level.Value or 1
+    local id = game.PlaceId
+    if id == 2753915549 then -- World1
         if level <= 9 then
             NameMon = "Bandit"
             LevelQuest = 1
@@ -156,36 +140,21 @@ function CheckQuest()
             LevelQuest = 1
             NameQuest = "JungleQuest"
             CFrameQuest = CFrame.new(-1598, 35, 153)
-            CFrameMon = CFrame.new(-1448, 68, 11)
-        elseif level <= 29 then
-            NameMon = "Gorilla"
-            LevelQuest = 2
-            NameQuest = "JungleQuest"
-            CFrameQuest = CFrame.new(-1598, 35, 153)
-            CFrameMon = CFrame.new(-1130, 40, -525)
-        -- Continuação nos próximos blocos...
+            CFrameMon = CFrame.new(-1448, 67, 11)
         end
-    elseif World2 then
+    elseif id == 4442272183 then -- World2
         if level <= 724 then
             NameMon = "Raider"
             LevelQuest = 1
             NameQuest = "Area1Quest"
             CFrameQuest = CFrame.new(-429, 71, 1836)
             CFrameMon = CFrame.new(-728, 52, 2345)
-        elseif level <= 774 then
-            NameMon = "Swan Pirate"
-            LevelQuest = 2
-            NameQuest = "Area1Quest"
-            CFrameQuest = CFrame.new(-429, 71, 1836)
-            CFrameMon = CFrame.new(878, 121, 1235)
-        -- Continuação nos próximos blocos...
         elseif level >= 1625 then
-            -- Teleporte para o Terceiro Mundo
             pcall(function()
                 game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("TravelDressrosa")
             end)
         end
-    elseif World3 then
+    elseif id == 7449423635 then -- World3
         if level <= 1574 then
             NameMon = "Pirate Millionaire"
             LevelQuest = 1
@@ -201,19 +170,29 @@ function CheckQuest()
         end
     end
 end
+
+function AceitarMissao()
+    pcall(function()
+        if NameQuest and LevelQuest then
+            game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("AbandonQuest")
+            wait(0.1)
+            game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("StartQuest", NameQuest, LevelQuest)
+        end
+    end)
+end
+
 spawn(function()
     while true do
         if _G.AutoFarm then
             pcall(function()
                 CheckQuest()
+                AceitarMissao()
                 EquipWeapon(_G.Weapon)
                 local mob = nil
                 for _, enemy in pairs(workspace.Enemies:GetChildren()) do
-                    if enemy:FindFirstChild("Humanoid") and enemy:FindFirstChild("HumanoidRootPart") then
-                        if enemy.Name == NameMon and enemy.Humanoid.Health > 0 then
-                            mob = enemy.HumanoidRootPart
-                            break
-                        end
+                    if enemy.Name == NameMon and enemy:FindFirstChild("Humanoid") and enemy.Humanoid.Health > 0 and enemy:FindFirstChild("HumanoidRootPart") then
+                        mob = enemy.HumanoidRootPart
+                        break
                     end
                 end
                 if mob then
@@ -225,12 +204,12 @@ spawn(function()
                     Attack()
                 else
                     ClearStick()
-                    if CFrameMon then TP(CFrameMon) end
+                    TP(CFrameMon)
                 end
             end)
         else
             ClearStick()
         end
-        wait(0.2)
+        wait(0.25)
     end
 end)
