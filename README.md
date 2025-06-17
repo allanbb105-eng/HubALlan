@@ -3123,77 +3123,58 @@ spawn(function()
                         game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("StartQuest", NameQuest, LevelQuest)
                         wait(0.1)
                     end
-              elseif game:GetService("Players").LocalPlayer.PlayerGui.Main.Quest.Visible == true then
+             elseif game:GetService("Players").LocalPlayer.PlayerGui.Main.Quest.Visible == true then
     CheckQuest()
-    print("CFrameMon:", CFrameMon) -- Isso ajuda a debugar
+    print("CFrameMon:", CFrameMon)
+
     if CFrameMon then
         print("Teleportando para inimigo:", Mon, "em", CFrameMon.Position)
         topos(CFrameMon)
     else
         warn("CFrameMon está vazio, verifique CheckQuest().")
     end
-                    if game:GetService("Workspace").Enemies:FindFirstChild(Mon) then
-                        for i, v in pairs(game:GetService("Workspace").Enemies:GetChildren()) do
-                            if v:FindFirstChild("HumanoidRootPart") and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 then
-                                if v.Name == Mon then
-                                    if string.find(game:GetService("Players").LocalPlayer.PlayerGui.Main.Quest.Container.QuestTitle.Title.Text, NameMon) then
-                                        HealthMs = v.Humanoid.MaxHealth * getgenv().Kill_At / 100
-                                        repeat task.wait()
-                                            if v.Humanoid.Health <= HealthMs then
-                                                AutoHaki()
-                                                EquipWeapon(game:GetService("Players").LocalPlayer.Data.DevilFruit.Value)
-                                                topos(v.HumanoidRootPart.CFrame * CFrame.new(0, 10, 0))
-                                                v.HumanoidRootPart.CanCollide = false
-                                                PosMonMasteryFruit = v.HumanoidRootPart.CFrame
-                                                MonFarm = v.Name
-                                                PosMon = v.HumanoidRootPart.CFrame
-                                                v.Humanoid.WalkSpeed = 0
-                                                v.Head.CanCollide = false
-                                                UseSkill = true
-                                                Skillaimbot = true
-                                            else
-                                                UseSkill = false
-                                                Skillaimbot = false
-                                                AutoHaki()
-                                                EquipWeapon(getgenv().SelectWeapon)
-                                                MonFarm = v.Name
-                                                PosMon = v.HumanoidRootPart.CFrame
-                                                topos(v.HumanoidRootPart.CFrame * Pos)
-                                                v.HumanoidRootPart.CanCollide = false
-                                                PosMonMasteryFruit = v.HumanoidRootPart.CFrame
-                                                v.Humanoid.WalkSpeed = 0
-                                                v.Head.CanCollide = false
-                                            end
-                                            getgenv().StartMagnet = true
-                                        until not getgenv().MasteryFarm or v.Humanoid.Health <= 0 or not v.Parent or game:GetService("Players").LocalPlayer.PlayerGui.Main.Quest.Visible == false
-                                    else
-                                        UseSkill = false
-                                        game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("AbandonQuest")
-                                    end
-                                end
-                            end
-                        end
-                    else
-                        topos(CFrameMon)
-                        UseSkill = false
-                        Skillaimbot = false
-                        Mob = game:GetService("ReplicatedStorage"):FindFirstChild(Mon)
 
-                        if Mob then
-                            topos(Mob.HumanoidRootPart.CFrame * CFrame.new(0, 0, 10))
+    for i, v in pairs(game:GetService("Workspace").Enemies:GetChildren()) do
+        if v:FindFirstChild("HumanoidRootPart") and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 then
+            if string.find(v.Name, Mon) then
+                if string.find(game:GetService("Players").LocalPlayer.PlayerGui.Main.Quest.Container.QuestTitle.Title.Text, NameMon) then
+                    
+                    local healthLimit = v.Humanoid.MaxHealth * (getgenv().Kill_At / 100)
+                    repeat task.wait()
+                        if v.Humanoid.Health <= healthLimit and getgenv().MasteryFarm then
+                            -- Maestria: usar fruta
+                            AutoHaki()
+                            EquipWeapon(game:GetService("Players").LocalPlayer.Data.DevilFruit.Value)
+                            UseSkill = true
+                            Skillaimbot = true
                         else
-                            if game:GetService("Players").LocalPlayer.Character.HumanoidRootPart.CFrame.Y <= 1 then
-                                game:GetService("Players").LocalPlayer.Character.Humanoid.Jump = true
-                                task.wait()
-                                game:GetService("Players").LocalPlayer.Character.Humanoid.Jump = false
-                            end
+                            -- Level: ataque normal
+                            UseSkill = false
+                            Skillaimbot = false
+                            AutoHaki()
+                            EquipWeapon(getgenv().SelectWeapon)
                         end
-                    end
+
+                        MonFarm = v.Name
+                        PosMon = v.HumanoidRootPart.CFrame
+                        PosMonMasteryFruit = v.HumanoidRootPart.CFrame
+                        topos(v.HumanoidRootPart.CFrame * CFrame.new(0, 15, 0))
+
+                        v.Humanoid.WalkSpeed = 0
+                        v.HumanoidRootPart.CanCollide = false
+                        v.Head.CanCollide = false
+
+                        getgenv().StartMagnet = true
+
+                    until v.Humanoid.Health <= 0 or not v.Parent or not game.Players.LocalPlayer.PlayerGui.Main.Quest.Visible
+
+                else
+                    UseSkill = false
+                    game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("AbandonQuest")
                 end
-            end)
+            end
         end
     end
-end)
 spawn(function()
     while task.wait() do
         if UseSkill then
