@@ -20,11 +20,12 @@ modeBtn.Text = "Modo: BodyPosition"
 modeBtn.TextSize = 18
 modeBtn.TextColor3 = Color3.new(1, 1, 1)
 
--- 🔧 Variáveis principais
+-- 🔧 Variáveis Globais
 _G.AutoFarm = false
 _G.UseTeleport = false
 _G.Weapon = "Combat"
 _G.AutoFruit = true
+_G.AutoStats = true
 
 -- 🌐 Botões
 toggleBtn.MouseButton1Click:Connect(function()
@@ -37,7 +38,7 @@ modeBtn.MouseButton1Click:Connect(function()
     modeBtn.Text = _G.UseTeleport and "Modo: Teleporte" or "Modo: BodyPosition"
 end)
 
--- 📦 Utilitários
+-- 📦 Funções Utilitárias
 function TP(cframe)
     local hrp = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
     if hrp and typeof(cframe) == "CFrame" then
@@ -107,7 +108,7 @@ function ColetarFrutas()
     end
 end
 
--- 🍍 Auto Fruit
+-- 🍍 Auto Coleta de Frutas
 spawn(function()
     while wait(10) do
         if _G.AutoFruit then
@@ -115,24 +116,21 @@ spawn(function()
         end
     end
 end)
--- 📈 Auto distribuir pontos de status (Stats)
-_G.AutoStats = true
 
+-- 📈 Distribuição Automática de Status
 spawn(function()
 	while wait(1) do
 		if _G.AutoStats then
 			pcall(function()
-				local stats = game.Players.LocalPlayer.Data.Stats
+				local stats = game.Players.LocalPlayer:FindFirstChild("Data") and game.Players.LocalPlayer.Data:FindFirstChild("Stats")
 				if stats then
-					local melee = stats.Melee.Level.Value
-					local defense = stats.Defense.Level.Value
-					local sword = stats.Sword.Level.Value
-					if melee < 2400 then
-						game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("AddPoint", "Melee")
-					elseif defense < 2400 then
-						game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("AddPoint", "Defense")
-					elseif sword < 2400 then
-						game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("AddPoint", "Sword")
+					local ordem = {"Melee", "Defense", "Sword"}
+					for _, s in ipairs(ordem) do
+						local stat = stats:FindFirstChild(s)
+						if stat and stat.Level.Value < 2400 then
+							game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("AddPoint", s)
+							break
+						end
 					end
 				end
 			end)
@@ -140,7 +138,7 @@ spawn(function()
 	end
 end)
 
--- 🧭 Variáveis de missão
+-- 🧭 Missão
 NameMon, NameQuest, LevelQuest, CFrameQuest, CFrameMon = nil, nil, nil, nil, nil
 
 function CheckQuest()
@@ -163,22 +161,19 @@ function CheckQuest()
     end
 end
 
--- ✅ Corrigido: só aceita missão se necessário
 function AceitarMissao()
     local Rep = game:GetService("ReplicatedStorage")
     local Player = game.Players.LocalPlayer
     local gui = Player:FindFirstChild("PlayerGui")
     local current = gui and gui:FindFirstChild("QuestGUI") and gui.QuestGUI:FindFirstChild("Title")
-    if not current or not current.Text:find(NameQuest) then
+    if not current or current.Text == "" then
         pcall(function()
-            Rep.Remotes.CommF_:InvokeServer("AbandonQuest")
-            wait(4)
             Rep.Remotes.CommF_:InvokeServer("StartQuest", NameQuest, LevelQuest)
         end)
     end
 end
 
--- 🔁 AutoFarm principal
+-- 🔁 Loop Principal AutoFarm
 spawn(function()
     while wait(0.25) do
         if _G.AutoFarm then
