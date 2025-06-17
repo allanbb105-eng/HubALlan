@@ -1,4 +1,4 @@
--- Allan Hub Interface
+-- Interface do Allan Hub
 local ScreenGui = Instance.new("ScreenGui")
 local Toggle = Instance.new("TextButton")
 local ModeToggle = Instance.new("TextButton")
@@ -32,13 +32,12 @@ Toggle.MouseButton1Click:Connect(function()
     _G.AutoFarm = not _G.AutoFarm
     Toggle.Text = _G.AutoFarm and "Desativar Allan Hub" or "Ativar Allan Hub"
 end)
-
 ModeToggle.MouseButton1Click:Connect(function()
     _G.UseTeleport = not _G.UseTeleport
     ModeToggle.Text = _G.UseTeleport and "Modo: Teleporte" or "Modo: BodyPosition"
 end)
 
--- Configurações
+-- Configurações principais
 _G.Weapon = "Combat"
 
 function TP(pos)
@@ -65,12 +64,9 @@ function Attack()
         local Combat = require(game.Players.LocalPlayer.PlayerScripts.CombatFramework)
         local controller = Combat.activeController
         if controller and controller.equipped then
-            local blade = controller.blades[1]
-            if blade then
-                for i = 1, 3 do
-                    controller:attack()
-                    wait(0.05)
-                end
+            for i = 1, 3 do
+                controller:attack()
+                wait(0.05)
             end
         else
             SimulateClick()
@@ -103,8 +99,19 @@ end
 function ClearStick()
     local hrp = game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
     if hrp then
-        local bp = hrp:FindFirstChild("AllanStick")
-        if bp then bp:Destroy() end
+        local stick = hrp:FindFirstChild("AllanStick")
+        if stick then stick:Destroy() end
+    end
+end
+
+-- NOVA FUNÇÃO: Magnetismo!
+function MagnetMobs(center)
+    for _, mob in pairs(workspace.Enemies:GetChildren()) do
+        if mob:FindFirstChild("HumanoidRootPart") and mob:FindFirstChild("Humanoid") and mob.Humanoid.Health > 0 then
+            pcall(function()
+                mob.HumanoidRootPart.CFrame = CFrame.new(center + Vector3.new(math.random(-3,3), 0, math.random(-3,3)))
+            end)
+        end
     end
 end
 
@@ -139,6 +146,7 @@ function CheckQuest()
     end
 end
 
+-- LOOP PRINCIPAL COM ÍMÃ ATIVADO
 spawn(function()
     while true do
         if _G.AutoFarm then
@@ -158,6 +166,7 @@ spawn(function()
                         else
                             StickToMob(mob.HumanoidRootPart)
                         end
+                        MagnetMobs(game.Players.LocalPlayer.Character.HumanoidRootPart.Position) -- 🧲 Magnetismo aqui
                         wait(0.2)
                         Attack()
                         if mob.Humanoid.Health <= 0 then
