@@ -7399,7 +7399,7 @@ task.spawn(function()
                             EquipWeapon("Tushita")
                         elseif not hasNotified then
                             game.StarterGui:SetCore("SendNotification", {
-                                Title = "island Hub",
+                                Title = "Allan Hub",
                                 Text = "Use! - Yama or Tushita",
                                 con = "rbxassetid://112254107346248",
                                 Duration = 10,
