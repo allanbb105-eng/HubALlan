@@ -119,7 +119,7 @@ spawn(function()
                     local mob = FindMob(NameMon)
                     if mob then
                         EquipWeapon(_G.Weapon)
-                        TP(mob.HumanoidRootPart.CFrame * CFrame.new(0, 10, 5))
+                        TP(mob.HumanoidRootPart.CFrame * CFrame.new(0, 0.8, 0)) -- mais colado no mob
                         wait(0.2)
                         Attack()
                     else
@@ -129,6 +129,6 @@ spawn(function()
                 end
             end)
         end
-        wait(0.05) -- velocidade do loop geral
+        wait(0.05)
     end
 end)
