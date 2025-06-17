@@ -115,6 +115,30 @@ spawn(function()
         end
     end
 end)
+-- 📈 Auto distribuir pontos de status (Stats)
+_G.AutoStats = true
+
+spawn(function()
+	while wait(1) do
+		if _G.AutoStats then
+			pcall(function()
+				local stats = game.Players.LocalPlayer.Data.Stats
+				if stats then
+					local melee = stats.Melee.Level.Value
+					local defense = stats.Defense.Level.Value
+					local sword = stats.Sword.Level.Value
+					if melee < 2400 then
+						game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("AddPoint", "Melee")
+					elseif defense < 2400 then
+						game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("AddPoint", "Defense")
+					elseif sword < 2400 then
+						game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("AddPoint", "Sword")
+					end
+				end
+			end)
+		end
+	end
+end)
 
 -- 🧭 Variáveis de missão
 NameMon, NameQuest, LevelQuest, CFrameQuest, CFrameMon = nil, nil, nil, nil, nil
@@ -148,7 +172,7 @@ function AceitarMissao()
     if not current or not current.Text:find(NameQuest) then
         pcall(function()
             Rep.Remotes.CommF_:InvokeServer("AbandonQuest")
-            wait(0.2)
+            wait(4)
             Rep.Remotes.CommF_:InvokeServer("StartQuest", NameQuest, LevelQuest)
         end)
     end
