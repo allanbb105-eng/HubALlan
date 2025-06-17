@@ -3123,9 +3123,9 @@ spawn(function()
                         game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("StartQuest", NameQuest, LevelQuest)
                         wait(0.1)
                     end
-                elseif game:GetService("Players").LocalPlayer.PlayerGui.Main.Quest.Visible == true then
+              elseif game:GetService("Players").LocalPlayer.PlayerGui.Main.Quest.Visible == true then
     CheckQuest()
-    print("CFrameMon:", CFrameMon)
+    print("CFrameMon:", CFrameMon) -- Isso ajuda a debugar
     if CFrameMon then
         print("Teleportando para inimigo:", Mon, "em", CFrameMon.Position)
         topos(CFrameMon)
