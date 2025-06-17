@@ -29,6 +29,7 @@ ModeToggle.TextSize = 18
 _G.AutoFarm = false
 _G.UseTeleport = false
 _G.Weapon = "Combat"
+_G.AutoFruit = true -- ou usar botão no hub
 
 Toggle.MouseButton1Click:Connect(function()
     _G.AutoFarm = not _G.AutoFarm
@@ -669,3 +670,11 @@ elseif MyLevel <= 1449 then
         end
     end
 end
+spawn(function()
+    while true do
+        if _G.AutoFruit then
+            ColetarFrutas()
+        end
+        wait(10) -- verifica a cada 10 segundos
+    end
+end)
