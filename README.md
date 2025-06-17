@@ -165,13 +165,22 @@ function AceitarMissao()
     local Rep = game:GetService("ReplicatedStorage")
     local Player = game.Players.LocalPlayer
     local gui = Player:FindFirstChild("PlayerGui")
-    local current = gui and gui:FindFirstChild("QuestGUI") and gui.QuestGUI:FindFirstChild("Title")
-    if not current or current.Text == "" then
+    local questGui = gui and gui:FindFirstChild("QuestGUI")
+    local title = questGui and questGui:FindFirstChild("Title")
+    local progress = questGui and questGui:FindFirstChild("Progress")
+    if not title or title.Text == "" then
+        -- Sem missão ativa
+        pcall(function()
+            Rep.Remotes.CommF_:InvokeServer("StartQuest", NameQuest, LevelQuest)
+        end)
+    elseif progress and progress.Text:find("0/") == false then
+        -- Missão concluída (por exemplo, "3/3")
         pcall(function()
             Rep.Remotes.CommF_:InvokeServer("StartQuest", NameQuest, LevelQuest)
         end)
     end
 end
+
 
 -- 🔁 Loop Principal AutoFarm
 spawn(function()
