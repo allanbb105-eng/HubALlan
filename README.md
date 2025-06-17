@@ -1,4 +1,4 @@
--- Ativa GUI
+-- 🌀 Interface Gráfica
 local gui = Instance.new("ScreenGui", game:GetService("CoreGui"))
 gui.Name = "AllanHub"
 
@@ -20,11 +20,13 @@ modeBtn.Text = "Modo: BodyPosition"
 modeBtn.TextSize = 18
 modeBtn.TextColor3 = Color3.new(1, 1, 1)
 
+-- 🔧 Variáveis principais
 _G.AutoFarm = false
 _G.UseTeleport = false
 _G.Weapon = "Combat"
 _G.AutoFruit = true
 
+-- 🌐 Botões
 toggleBtn.MouseButton1Click:Connect(function()
     _G.AutoFarm = not _G.AutoFarm
     toggleBtn.Text = _G.AutoFarm and "Desativar Allan Hub" or "Ativar Allan Hub"
@@ -35,6 +37,7 @@ modeBtn.MouseButton1Click:Connect(function()
     modeBtn.Text = _G.UseTeleport and "Modo: Teleporte" or "Modo: BodyPosition"
 end)
 
+-- 📦 Utilitários
 function TP(cframe)
     local hrp = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
     if hrp and typeof(cframe) == "CFrame" then
@@ -104,6 +107,7 @@ function ColetarFrutas()
     end
 end
 
+-- 🍍 Auto Fruit
 spawn(function()
     while wait(10) do
         if _G.AutoFruit then
@@ -112,11 +116,11 @@ spawn(function()
     end
 end)
 
--- Variáveis de missão
-NameMon, LevelQuest, NameQuest, CFrameQuest, CFrameMon = nil, nil, nil, nil, nil
+-- 🧭 Variáveis de missão
+NameMon, NameQuest, LevelQuest, CFrameQuest, CFrameMon = nil, nil, nil, nil, nil
 
 function CheckQuest()
-    local level = game.Players.LocalPlayer:FindFirstChild("Data") and game.Players.LocalPlayer.Data.Level.Value or 1
+    local level = game.Players.LocalPlayer.Data.Level.Value
     local place = game.PlaceId
     if place == 2753915549 then
         if level <= 14 then
@@ -135,26 +139,30 @@ function CheckQuest()
     end
 end
 
+-- ✅ Corrigido: só aceita missão se necessário
 function AceitarMissao()
-    pcall(function()
-        if NameQuest and LevelQuest then
-            local Rep = game:GetService("ReplicatedStorage")
+    local Rep = game:GetService("ReplicatedStorage")
+    local Player = game.Players.LocalPlayer
+    local gui = Player:FindFirstChild("PlayerGui")
+    local current = gui and gui:FindFirstChild("QuestGUI") and gui.QuestGUI:FindFirstChild("Title")
+    if not current or not current.Text:find(NameQuest) then
+        pcall(function()
             Rep.Remotes.CommF_:InvokeServer("AbandonQuest")
             wait(0.2)
             Rep.Remotes.CommF_:InvokeServer("StartQuest", NameQuest, LevelQuest)
-        end
-    end)
+        end)
+    end
 end
 
+-- 🔁 AutoFarm principal
 spawn(function()
     while wait(0.25) do
         if _G.AutoFarm then
             pcall(function()
                 CheckQuest()
                 AceitarMissao()
-                wait(0.2)
                 EquipWeapon(_G.Weapon)
-                local alvo
+                local alvo = nil
                 for _, enemy in pairs(workspace.Enemies:GetChildren()) do
                     if enemy.Name == NameMon and enemy:FindFirstChild("HumanoidRootPart") then
                         local humanoid = enemy:FindFirstChild("Humanoid")
