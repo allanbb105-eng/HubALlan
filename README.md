@@ -3123,15 +3123,8 @@ spawn(function()
                         game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("StartQuest", NameQuest, LevelQuest)
                         wait(0.1)
                     end
-              elseif game:GetService("Players").LocalPlayer.PlayerGui.Main.Quest.Visible == true then
-    CheckQuest()
-    print("CFrameMon:", CFrameMon) -- Isso ajuda a debugar
-    if CFrameMon then
-        print("Teleportando para inimigo:", Mon, "em", CFrameMon.Position)
-        topos(CFrameMon)
-    else
-        warn("CFrameMon está vazio, verifique CheckQuest().")
-    end
+                elseif game:GetService("Players").LocalPlayer.PlayerGui.Main.Quest.Visible == true then
+                    CheckQuest()
                     if game:GetService("Workspace").Enemies:FindFirstChild(Mon) then
                         for i, v in pairs(game:GetService("Workspace").Enemies:GetChildren()) do
                             if v:FindFirstChild("HumanoidRootPart") and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 then
