@@ -1,6 +1,7 @@
 -- Allan Hub Interface
 local ScreenGui = Instance.new("ScreenGui")
 local Toggle = Instance.new("TextButton")
+local ModeToggle = Instance.new("TextButton")
 
 ScreenGui.Name = "AllanHub"
 ScreenGui.Parent = game:GetService("CoreGui")
@@ -15,10 +16,26 @@ Toggle.Text = "Ativar Allan Hub"
 Toggle.TextColor3 = Color3.fromRGB(255, 255, 255)
 Toggle.TextSize = 20
 
+ModeToggle.Name = "ModeToggle"
+ModeToggle.Parent = ScreenGui
+ModeToggle.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+ModeToggle.Position = UDim2.new(0, 10, 0, 150)
+ModeToggle.Size = UDim2.new(0, 150, 0, 40)
+ModeToggle.Font = Enum.Font.SourceSansBold
+ModeToggle.Text = "Modo: BodyPosition"
+ModeToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+ModeToggle.TextSize = 18
+
 _G.AutoFarm = false
+_G.UseTeleport = false
 Toggle.MouseButton1Click:Connect(function()
     _G.AutoFarm = not _G.AutoFarm
     Toggle.Text = _G.AutoFarm and "Desativar Allan Hub" or "Ativar Allan Hub"
+end)
+
+ModeToggle.MouseButton1Click:Connect(function()
+    _G.UseTeleport = not _G.UseTeleport
+    ModeToggle.Text = _G.UseTeleport and "Modo: Teleporte" or "Modo: BodyPosition"
 end)
 
 -- Configurações
@@ -72,24 +89,22 @@ function FindMob(name)
 end
 
 function StickToMob(target)
-    local char = game.Players.LocalPlayer.Character
-    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    local hrp = game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
     if not (hrp and target) then return end
-
-    local bodyPos = hrp:FindFirstChild("AllanStick") or Instance.new("BodyPosition")
-    bodyPos.Name = "AllanStick"
-    bodyPos.MaxForce = Vector3.new(1e5, 1e5, 1e5)
-    bodyPos.Position = target.Position + Vector3.new(0, 0.8, 0)
-    bodyPos.P = 5000
-    bodyPos.D = 500
-    bodyPos.Parent = hrp
+    local bp = hrp:FindFirstChild("AllanStick") or Instance.new("BodyPosition")
+    bp.Name = "AllanStick"
+    bp.MaxForce = Vector3.new(1e5, 1e5, 1e5)
+    bp.Position = target.Position + Vector3.new(0, 0.8, 0)
+    bp.P = 5000
+    bp.D = 500
+    bp.Parent = hrp
 end
 
 function ClearStick()
     local hrp = game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
     if hrp then
-        local stick = hrp:FindFirstChild("AllanStick")
-        if stick then stick:Destroy() end
+        local bp = hrp:FindFirstChild("AllanStick")
+        if bp then bp:Destroy() end
     end
 end
 
@@ -138,7 +153,11 @@ spawn(function()
                     local mob = FindMob(NameMon)
                     if mob then
                         EquipWeapon(_G.Weapon)
-                        StickToMob(mob.HumanoidRootPart)
+                        if _G.UseTeleport then
+                            TP(mob.HumanoidRootPart.CFrame * CFrame.new(0, 1.5, 0))
+                        else
+                            StickToMob(mob.HumanoidRootPart)
+                        end
                         wait(0.2)
                         Attack()
                         if mob.Humanoid.Health <= 0 then
