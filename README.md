@@ -3132,8 +3132,6 @@ spawn(function()
     else
         warn("CFrameMon está vazio, verifique CheckQuest().")
     end
-
-
                     if game:GetService("Workspace").Enemies:FindFirstChild(Mon) then
                         for i, v in pairs(game:GetService("Workspace").Enemies:GetChildren()) do
                             if v:FindFirstChild("HumanoidRootPart") and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 then
