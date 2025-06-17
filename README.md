@@ -21,14 +21,16 @@ Toggle.MouseButton1Click:Connect(function()
     Toggle.Text = _G.AutoFarm and "Desativar Allan Hub" or "Ativar Allan Hub"
 end)
 
--- Configuração inicial
+-- Configuração
 _G.Weapon = "Combat"
 
+-- Função para teleporte
 function TP(pos)
     local hrp = game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
     if hrp then hrp.CFrame = pos wait(0.1) end
 end
 
+-- Função para equipar arma
 function EquipWeapon(name)
     local tool = game.Players.LocalPlayer.Backpack:FindFirstChild(name)
     if tool then
@@ -37,6 +39,14 @@ function EquipWeapon(name)
     end
 end
 
+-- Simula clique do mouse esquerdo
+function SimulateClick()
+    local vim = game:GetService("VirtualInputManager")
+    vim:SendMouseButtonEvent(0, 0, 0, true, game, 0)
+    vim:SendMouseButtonEvent(0, 0, 0, false, game, 0)
+end
+
+-- Função de ataque atualizada com fallback para clique
 function Attack()
     local success, err = pcall(function()
         local Combat = require(game.Players.LocalPlayer.PlayerScripts.CombatFramework)
@@ -46,14 +56,16 @@ function Attack()
             if blade then
                 controller:attack()
             end
+        else
+            SimulateClick()
         end
     end)
-
     if not success then
-        warn("[Allan Hub] Erro ao atacar: ", err)
+        SimulateClick()
     end
 end
 
+-- Encontra o mob
 function FindMob(name)
     for _, mob in pairs(workspace.Enemies:GetChildren()) do
         if mob.Name:match(name) and mob:FindFirstChild("Humanoid") and mob.Humanoid.Health > 0 then
@@ -63,13 +75,13 @@ function FindMob(name)
     end
 end
 
+-- Detecta missão baseada no level
 function CheckQuest()
     local level = game.Players.LocalPlayer.Data.Level.Value
     local placeId = game.PlaceId
     local Worlds = {
         [2753915549] = {
             {Level = 1, Mob = "Bandit", Quest = "BanditQuest1", QuestLevel = 1, CFrameQuest = CFrame.new(1059, 16, 1544), CFrameMon = CFrame.new(1046, 27, 1561)},
-            -- Continue preenchendo os estágios
         },
         [4442272183] = {
             {Level = 700, Mob = "Raider", Quest = "Area1Quest", QuestLevel = 1, CFrameQuest = CFrame.new(-429, 71, 1836), CFrameMon = CFrame.new(-728, 52, 2345)},
@@ -95,6 +107,7 @@ function CheckQuest()
     end
 end
 
+-- Loop principal
 spawn(function()
     while true do
         if _G.AutoFarm then
