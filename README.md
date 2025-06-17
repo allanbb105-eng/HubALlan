@@ -1,46 +1,45 @@
--- ALLAN HUB vFinal – Corrigido e Estável (Auto Farm + Auto Quest + Auto Fruit)
-
+-- Ativa GUI
 local gui = Instance.new("ScreenGui", game:GetService("CoreGui"))
 gui.Name = "AllanHub"
 
-local Toggle = Instance.new("TextButton", gui)
-Toggle.Position = UDim2.new(0, 10, 0, 100)
-Toggle.Size = UDim2.new(0, 150, 0, 40)
-Toggle.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-Toggle.Font = Enum.Font.SourceSansBold
-Toggle.Text = "Ativar Allan Hub"
-Toggle.TextSize = 20
-Toggle.TextColor3 = Color3.new(1, 1, 1)
+local toggleBtn = Instance.new("TextButton", gui)
+toggleBtn.Position = UDim2.new(0, 10, 0, 100)
+toggleBtn.Size = UDim2.new(0, 150, 0, 40)
+toggleBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+toggleBtn.Font = Enum.Font.SourceSansBold
+toggleBtn.Text = "Ativar Allan Hub"
+toggleBtn.TextSize = 20
+toggleBtn.TextColor3 = Color3.new(1, 1, 1)
 
-local ModeToggle = Instance.new("TextButton", gui)
-ModeToggle.Position = UDim2.new(0, 10, 0, 150)
-ModeToggle.Size = UDim2.new(0, 150, 0, 40)
-ModeToggle.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-ModeToggle.Font = Enum.Font.SourceSansBold
-ModeToggle.Text = "Modo: BodyPosition"
-ModeToggle.TextSize = 18
-ModeToggle.TextColor3 = Color3.new(1, 1, 1)
+local modeBtn = Instance.new("TextButton", gui)
+modeBtn.Position = UDim2.new(0, 10, 0, 150)
+modeBtn.Size = UDim2.new(0, 150, 0, 40)
+modeBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+modeBtn.Font = Enum.Font.SourceSansBold
+modeBtn.Text = "Modo: BodyPosition"
+modeBtn.TextSize = 18
+modeBtn.TextColor3 = Color3.new(1, 1, 1)
 
--- Variáveis de controle
-_G.AutoFarm = true
-_G.UseTeleport = true
+_G.AutoFarm = false
+_G.UseTeleport = false
 _G.Weapon = "Combat"
 _G.AutoFruit = true
 
-Toggle.MouseButton1Click:Connect(function()
+toggleBtn.MouseButton1Click:Connect(function()
     _G.AutoFarm = not _G.AutoFarm
-    Toggle.Text = _G.AutoFarm and "Desativar Allan Hub" or "Ativar Allan Hub"
+    toggleBtn.Text = _G.AutoFarm and "Desativar Allan Hub" or "Ativar Allan Hub"
 end)
 
-ModeToggle.MouseButton1Click:Connect(function()
+modeBtn.MouseButton1Click:Connect(function()
     _G.UseTeleport = not _G.UseTeleport
-    ModeToggle.Text = _G.UseTeleport and "Modo: Teleporte" or "Modo: BodyPosition"
+    modeBtn.Text = _G.UseTeleport and "Modo: Teleporte" or "Modo: BodyPosition"
 end)
 
--- Utilitários
-function TP(pos)
+function TP(cframe)
     local hrp = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-    if hrp and typeof(pos) == "CFrame" then hrp.CFrame = pos end
+    if hrp and typeof(cframe) == "CFrame" then
+        hrp.CFrame = cframe
+    end
 end
 
 function EquipWeapon(name)
@@ -77,7 +76,7 @@ function StickToMob(target)
     local bp = hrp:FindFirstChild("AllanStick") or Instance.new("BodyPosition")
     bp.Name = "AllanStick"
     bp.MaxForce = Vector3.new(1e5, 1e5, 1e5)
-    bp.Position = target.Position + Vector3.new(0, 0.8, 0)
+    bp.Position = target.Position + Vector3.new(0, 1, 0)
     bp.P = 5000
     bp.D = 500
     bp.Parent = hrp
@@ -86,8 +85,8 @@ end
 function ClearStick()
     local hrp = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
     if hrp then
-        local bp = hrp:FindFirstChild("AllanStick")
-        if bp then bp:Destroy() end
+        local stick = hrp:FindFirstChild("AllanStick")
+        if stick then stick:Destroy() end
     end
 end
 
@@ -105,58 +104,33 @@ function ColetarFrutas()
     end
 end
 
--- AutoFruit loop
 spawn(function()
-    while task.wait(10) do
-        if _G.AutoFruit then pcall(ColetarFrutas) end
+    while wait(10) do
+        if _G.AutoFruit then
+            pcall(ColetarFrutas)
+        end
     end
 end)
 
--- AutoQuest
-NameMon, NameQuest, LevelQuest, CFrameQuest, CFrameMon = nil, nil, nil, nil, nil
+-- Variáveis de missão
+NameMon, LevelQuest, NameQuest, CFrameQuest, CFrameMon = nil, nil, nil, nil, nil
 
 function CheckQuest()
-    local level = game.Players.LocalPlayer:FindFirstChild("Data") and game.Players.LocalPlayer.Data:FindFirstChild("Level").Value or 1
+    local level = game.Players.LocalPlayer:FindFirstChild("Data") and game.Players.LocalPlayer.Data.Level.Value or 1
     local place = game.PlaceId
     if place == 2753915549 then
-        if level <= 9 then
+        if level <= 14 then
             NameMon = "Bandit"
             NameQuest = "BanditQuest1"
             LevelQuest = 1
             CFrameQuest = CFrame.new(1059, 15, 1550)
             CFrameMon = CFrame.new(1046, 27, 1560)
-        elseif level <= 14 then
+        elseif level <= 29 then
             NameMon = "Monkey"
             NameQuest = "JungleQuest"
             LevelQuest = 1
             CFrameQuest = CFrame.new(-1598, 35, 153)
             CFrameMon = CFrame.new(-1448, 67, 11)
-        end
-    elseif place == 4442272183 then
-        if level <= 724 then
-            NameMon = "Raider"
-            NameQuest = "Area1Quest"
-            LevelQuest = 1
-            CFrameQuest = CFrame.new(-429, 71, 1836)
-            CFrameMon = CFrame.new(-728, 52, 2345)
-        elseif level >= 1625 then
-            pcall(function()
-                game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("TravelDressrosa")
-            end)
-        end
-    elseif place == 7449423635 then
-        if level <= 1574 then
-            NameMon = "Pirate Millionaire"
-            NameQuest = "PiratePortQuest"
-            LevelQuest = 1
-            CFrameQuest = CFrame.new(-290, 43, 5581)
-            CFrameMon = CFrame.new(-245, 47, 5584)
-        elseif level >= 2525 then
-            NameMon = "Cake Queen"
-            NameQuest = "CakeIsland2Quest"
-            LevelQuest = 2
-            CFrameQuest = CFrame.new(-1759, 179, -13065)
-            CFrameMon = CFrame.new(-1641, 179, -13334)
         end
     end
 end
@@ -172,29 +146,29 @@ function AceitarMissao()
     end)
 end
 
--- AutoFarm loop
 spawn(function()
-    while wait(0.2) do
+    while wait(0.25) do
         if _G.AutoFarm then
             pcall(function()
                 CheckQuest()
                 AceitarMissao()
+                wait(0.2)
                 EquipWeapon(_G.Weapon)
-                local target
+                local alvo
                 for _, enemy in pairs(workspace.Enemies:GetChildren()) do
                     if enemy.Name == NameMon and enemy:FindFirstChild("HumanoidRootPart") then
                         local humanoid = enemy:FindFirstChild("Humanoid")
                         if humanoid and humanoid.Health > 0 then
-                            target = enemy.HumanoidRootPart
+                            alvo = enemy.HumanoidRootPart
                             break
                         end
                     end
                 end
-                if target then
+                if alvo then
                     if _G.UseTeleport then
-                        TP(target.CFrame + Vector3.new(0, 3, 0))
+                        TP(alvo.CFrame + Vector3.new(0, 3, 0))
                     else
-                        StickToMob(target)
+                        StickToMob(alvo)
                     end
                     Attack()
                 elseif CFrameMon then
