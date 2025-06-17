@@ -1,4 +1,28 @@
-_G.AutoFarm = true
+-- Interface simples Allan Hub
+local ScreenGui = Instance.new("ScreenGui")
+local Toggle = Instance.new("TextButton")
+
+ScreenGui.Name = "AllanHub"
+ScreenGui.Parent = game.CoreGui
+
+Toggle.Name = "AutoFarmToggle"
+Toggle.Parent = ScreenGui
+Toggle.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+Toggle.BorderSizePixel = 2
+Toggle.Position = UDim2.new(0, 10, 0, 100)
+Toggle.Size = UDim2.new(0, 140, 0, 40)
+Toggle.Font = Enum.Font.SourceSansBold
+Toggle.Text = "Ativar Allan Hub"
+Toggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+Toggle.TextSize = 20
+
+_G.AutoFarm = false
+Toggle.MouseButton1Click:Connect(function()
+    _G.AutoFarm = not _G.AutoFarm
+    Toggle.Text = _G.AutoFarm and "Desativar Allan Hub" or "Ativar Allan Hub"
+end)
+
+-- Script funcional com sistema completo
 _G.Weapon = "Combat"
 
 function TP(pos)
@@ -38,83 +62,61 @@ function CheckQuest()
     local level = game.Players.LocalPlayer.Data.Level.Value
     local placeId = game.PlaceId
 
-    local World1 = (placeId == 2753915549)
-    local World2 = (placeId == 4442272183)
-    local World3 = (placeId == 7449423635)
+    local Worlds = {
+        [2753915549] = { -- First Sea
+            {Level = 1, Mob = "Bandit", Quest = "BanditQuest1", QuestLevel = 1, CFrameQuest = CFrame.new(1059, 16, 1544), CFrameMon = CFrame.new(1046, 27, 1561)},
+            -- Adicione mais estágios conforme necessário
+        },
+        [4442272183] = { -- Second Sea
+            {Level = 700, Mob = "Raider", Quest = "Area1Quest", QuestLevel = 1, CFrameQuest = CFrame.new(-429, 71, 1836), CFrameMon = CFrame.new(-728, 52, 2345)},
+            -- Adicione mais estágios conforme necessário
+        },
+        [7449423635] = { -- Third Sea
+            {Level = 1500, Mob = "Pirate Millionaire", Quest = "PiratePortQuest", QuestLevel = 1, CFrameQuest = CFrame.new(-290, 42, 5581), CFrameMon = CFrame.new(-246, 47, 5584)},
+            -- Adicione mais estágios conforme necessário
+        }
+    }
 
-    if World1 then
-        if level <= 9 then
-            NameMon = "Bandit"
-            LevelQuest = 1
-            NameQuest = "BanditQuest1"
-            CFrameQuest = CFrame.new(1059, 16, 1544)
-            CFrameMon = CFrame.new(1046, 27, 1561)
-        elseif level <= 14 then
-            NameMon = "Monkey"
-            LevelQuest = 1
-            NameQuest = "JungleQuest"
-            CFrameQuest = CFrame.new(-1598, 36, 153)
-            CFrameMon = CFrame.new(-1449, 68, 11)
-        elseif level <= 29 then
-            NameMon = "Gorilla"
-            LevelQuest = 2
-            NameQuest = "JungleQuest"
-            CFrameQuest = CFrame.new(-1598, 36, 153)
-            CFrameMon = CFrame.new(-1130, 40, -525)
-        end
-    elseif World2 then
-        if level <= 724 then
-            NameMon = "Raider"
-            LevelQuest = 1
-            NameQuest = "Area1Quest"
-            CFrameQuest = CFrame.new(-429, 71, 1836)
-            CFrameMon = CFrame.new(-728, 52, 2345)
-        elseif level <= 774 then
-            NameMon = "Mercenary"
-            LevelQuest = 2
-            NameQuest = "Area1Quest"
-            CFrameQuest = CFrame.new(-429, 71, 1836)
-            CFrameMon = CFrame.new(-1004, 80, 1424)
-        end
-    elseif World3 then
-        if level <= 1524 then
-            NameMon = "Pirate Millionaire"
-            LevelQuest = 1
-            NameQuest = "PiratePortQuest"
-            CFrameQuest = CFrame.new(-290, 42, 5581)
-            CFrameMon = CFrame.new(-246, 47, 5584)
-        elseif level <= 1574 then
-            NameMon = "Pistol Billionaire"
-            LevelQuest = 2
-            NameQuest = "PiratePortQuest"
-            CFrameQuest = CFrame.new(-290, 42, 5581)
-            CFrameMon = CFrame.new(-187, 86, 6013)
+    local region = Worlds[placeId]
+    if not region then return end
+
+    for i = #region, 1, -1 do
+        local stage = region[i]
+        if level >= stage.Level then
+            NameMon = stage.Mob
+            NameQuest = stage.Quest
+            LevelQuest = stage.QuestLevel
+            CFrameQuest = stage.CFrameQuest
+            CFrameMon = stage.CFrameMon
+            break
         end
     end
 end
 
 spawn(function()
-    while _G.AutoFarm do
-        pcall(function()
-            CheckQuest()
+    while true do
+        if _G.AutoFarm then
+            pcall(function()
+                CheckQuest()
 
-            if not game.Players.LocalPlayer.PlayerGui.Main.Quest.Visible then
-                TP(CFrameQuest)
-                wait(1)
-                game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("StartQuest", NameQuest, LevelQuest)
-            else
-                local mob = FindMob(NameMon)
-                if mob then
-                    EquipWeapon(_G.Weapon)
-                    TP(mob.HumanoidRootPart.CFrame * CFrame.new(0, 10, 5))
-                    wait(0.2)
-                    Attack()
-                else
-                    TP(CFrameMon)
+                if not game.Players.LocalPlayer.PlayerGui.Main.Quest.Visible then
+                    TP(CFrameQuest)
                     wait(1)
+                    game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("StartQuest", NameQuest, LevelQuest)
+                else
+                    local mob = FindMob(NameMon)
+                    if mob then
+                        EquipWeapon(_G.Weapon)
+                        TP(mob.HumanoidRootPart.CFrame * CFrame.new(0, 10, 5))
+                        wait(0.2)
+                        Attack()
+                    else
+                        TP(CFrameMon)
+                        wait(1)
+                    end
                 end
-            end
-        end)
+            end)
+        end
         wait()
     end
 end)
