@@ -207,17 +207,14 @@ ffunction CheckQuest()
             NameQuest = "ColosseumQuest"
             CFrameQuest = CFrame.new(-1580.04, 6.35, -2986.47)
             CFrameMon = CFrame.new(-1820.21, 51.68, -2740.66)
-
             {Level = 700, Mob = "Raider", Quest = "Area1Quest", QuestLevel = 1, CFrameQuest = CFrame.new(-429, 71, 1836), CFrameMon = CFrame.new(-728, 52, 2345)},
         },
         [7449423635] = {
             {Level = 1500, Mob = "Pirate Millionaire", Quest = "PiratePortQuest", QuestLevel = 1, CFrameQuest = CFrame.new(-290, 42, 5581), CFrameMon = CFrame.new(-246, 47, 5584)},
         }
     }
-
     local region = Worlds[placeId]
     if not region then return end
-
     for i = #region, 1, -1 do
         local s = region[i]
         if level >= s.Level then
