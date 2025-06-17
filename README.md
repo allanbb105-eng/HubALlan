@@ -173,7 +173,7 @@ function AceitarMissao()
         pcall(function()
             Rep.Remotes.CommF_:InvokeServer("StartQuest", NameQuest, LevelQuest)
         end)
-    elseif progress and progress.Text:find("0/") == false then
+    elseif progress and progress.Text:find("11/11") == false then
         -- Missão concluída (por exemplo, "3/3")
         pcall(function()
             Rep.Remotes.CommF_:InvokeServer("StartQuest", NameQuest, LevelQuest)
