@@ -16,7 +16,7 @@ local notificationCooldown = 10
 local currentTime = tick()
 if currentTime - lastNotificationTime >= notificationCooldown then
     game.StarterGui:SetCore("SendNotification", {
-        Title = "Allan Hub",
+        Title = "island Hub",
         Text = "Loading",
         Duration = 5
     })
@@ -1330,8 +1330,8 @@ end
 print("--[[Loaded UI]]--")
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 Window = Fluent:CreateWindow({
-    Title = "Allan Hub",
-    SubTitle = "by Allan Corp",
+    Title = "Island Hub-Blox Fruit",
+    SubTitle = "by mini hell",
     TabWidth = 155,
     Size = UDim2.fromOffset(555, 320),
     Acrylic = false, 
@@ -3123,9 +3123,9 @@ spawn(function()
                         game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("StartQuest", NameQuest, LevelQuest)
                         wait(0.1)
                     end
-            elseif game:GetService("Players").LocalPlayer.PlayerGui.Main.Quest.Visible == true then
+              elseif game:GetService("Players").LocalPlayer.PlayerGui.Main.Quest.Visible == true then
     CheckQuest()
-    print("CFrameMon:", CFrameMon)
+    print("CFrameMon:", CFrameMon) -- Isso ajuda a debugar
     if CFrameMon then
         print("Teleportando para inimigo:", Mon, "em", CFrameMon.Position)
         topos(CFrameMon)
@@ -8118,7 +8118,7 @@ local notificationCooldown = 10
 local currentTime = tick()
 if currentTime - lastNotificationTime >= notificationCooldown then
     game.StarterGui:SetCore("SendNotification", {
-        Title = "Allan Hub",
+        Title = "island hub",
         Text = "Successfully",
         Duration = 1
     })
