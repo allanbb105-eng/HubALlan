@@ -1,16 +1,15 @@
--- Interface simples Allan Hub
+-- Interface Allan Hub
 local ScreenGui = Instance.new("ScreenGui")
 local Toggle = Instance.new("TextButton")
 
 ScreenGui.Name = "AllanHub"
-ScreenGui.Parent = game.CoreGui
+ScreenGui.Parent = game:GetService("CoreGui")
 
 Toggle.Name = "AutoFarmToggle"
 Toggle.Parent = ScreenGui
-Toggle.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-Toggle.BorderSizePixel = 2
+Toggle.BackgroundColor3 = Color3.fromRGB(30,30,30)
 Toggle.Position = UDim2.new(0, 10, 0, 100)
-Toggle.Size = UDim2.new(0, 140, 0, 40)
+Toggle.Size = UDim2.new(0, 150, 0, 40)
 Toggle.Font = Enum.Font.SourceSansBold
 Toggle.Text = "Ativar Allan Hub"
 Toggle.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -22,15 +21,13 @@ Toggle.MouseButton1Click:Connect(function()
     Toggle.Text = _G.AutoFarm and "Desativar Allan Hub" or "Ativar Allan Hub"
 end)
 
--- Script funcional com sistema completo
+-- Config
 _G.Weapon = "Combat"
 
+-- Funções principais
 function TP(pos)
     local hrp = game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-    if hrp then
-        hrp.CFrame = pos
-        wait(0.1)
-    end
+    if hrp then hrp.CFrame = pos wait(0.1) end
 end
 
 function EquipWeapon(name)
@@ -41,11 +38,24 @@ function EquipWeapon(name)
     end
 end
 
+function SimulateClick()
+    local vim = game:GetService("VirtualInputManager")
+    vim:SendMouseButtonEvent(0, 0, 0, true, game, 0)
+    vim:SendMouseButtonEvent(0, 0, 0, false, game, 0)
+end
+
 function Attack()
-    local Combat = require(game.Players.LocalPlayer.PlayerScripts.CombatFramework)
-    local Controller = Combat.activeController
-    if Controller and Controller.equipped then
-        Controller:attack()
+    local success = pcall(function()
+        local Combat = require(game.Players.LocalPlayer.PlayerScripts.CombatFramework)
+        local Controller = Combat.activeController
+        if Controller and Controller.equipped then
+            Controller:attack()
+        else
+            SimulateClick()
+        end
+    end)
+    if not success then
+        SimulateClick()
     end
 end
 
@@ -61,19 +71,18 @@ end
 function CheckQuest()
     local level = game.Players.LocalPlayer.Data.Level.Value
     local placeId = game.PlaceId
-
     local Worlds = {
-        [2753915549] = { -- First Sea
+        [2753915549] = {
             {Level = 1, Mob = "Bandit", Quest = "BanditQuest1", QuestLevel = 1, CFrameQuest = CFrame.new(1059, 16, 1544), CFrameMon = CFrame.new(1046, 27, 1561)},
-            -- Adicione mais estágios conforme necessário
+            -- Continue inserindo estágios aqui até level 700...
         },
-        [4442272183] = { -- Second Sea
+        [4442272183] = {
             {Level = 700, Mob = "Raider", Quest = "Area1Quest", QuestLevel = 1, CFrameQuest = CFrame.new(-429, 71, 1836), CFrameMon = CFrame.new(-728, 52, 2345)},
-            -- Adicione mais estágios conforme necessário
+            -- Continue até 1499...
         },
-        [7449423635] = { -- Third Sea
+        [7449423635] = {
             {Level = 1500, Mob = "Pirate Millionaire", Quest = "PiratePortQuest", QuestLevel = 1, CFrameQuest = CFrame.new(-290, 42, 5581), CFrameMon = CFrame.new(-246, 47, 5584)},
-            -- Adicione mais estágios conforme necessário
+            -- Continue até o final do Terceiro Mundo...
         }
     }
 
@@ -81,13 +90,13 @@ function CheckQuest()
     if not region then return end
 
     for i = #region, 1, -1 do
-        local stage = region[i]
-        if level >= stage.Level then
-            NameMon = stage.Mob
-            NameQuest = stage.Quest
-            LevelQuest = stage.QuestLevel
-            CFrameQuest = stage.CFrameQuest
-            CFrameMon = stage.CFrameMon
+        local s = region[i]
+        if level >= s.Level then
+            NameMon = s.Mob
+            NameQuest = s.Quest
+            LevelQuest = s.QuestLevel
+            CFrameQuest = s.CFrameQuest
+            CFrameMon = s.CFrameMon
             break
         end
     end
@@ -98,7 +107,6 @@ spawn(function()
         if _G.AutoFarm then
             pcall(function()
                 CheckQuest()
-
                 if not game.Players.LocalPlayer.PlayerGui.Main.Quest.Visible then
                     TP(CFrameQuest)
                     wait(1)
@@ -107,7 +115,7 @@ spawn(function()
                     local mob = FindMob(NameMon)
                     if mob then
                         EquipWeapon(_G.Weapon)
-                        TP(mob.HumanoidRootPart.CFrame * CFrame.new(0, 10, 5))
+                        TP(mob.HumanoidRootPart.CFrame * CFrame.new(0,10,5))
                         wait(0.2)
                         Attack()
                     else
