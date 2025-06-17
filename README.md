@@ -16,7 +16,7 @@ local notificationCooldown = 10
 local currentTime = tick()
 if currentTime - lastNotificationTime >= notificationCooldown then
     game.StarterGui:SetCore("SendNotification", {
-        Title = "island Hub",
+        Title = "Allan Hub",
         Text = "Loading",
         Duration = 5
     })
