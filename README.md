@@ -2777,40 +2777,48 @@ spawn(function()
                         if (humanoidRoot.Position - CFrameQuest.Position).Magnitude <= 20 then
                             game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("StartQuest", NameQuest, LevelQuest)
                         end
-                    elseif questVisible then
-                        CheckQuest()
+                   elseif questVisible then
+                        CheckQuest() -- Garante que as variáveis da missão (Mon, CFrameMon) estão corretas
+
                         local enemies = game:GetService("Workspace").Enemies:GetChildren()
+                        local targetMob = nil
+
+                        -- Procura por um monstro vivo da missão
                         for _, v in pairs(enemies) do
-                            if v:FindFirstChild("HumanoidRootPart") and v:FindFirstChild("Humanoid") then
-                                if v.Humanoid.Health > 0 and v.Name == Mon then
-                                    if string.find(game:GetService("Players").LocalPlayer.PlayerGui.Main.Quest.Container.QuestTitle.Title.Text, NameMon) then
-                                        repeat
-                                            task.wait(0.1)
-                                            AutoHaki()
-                                            EquipWeapon(getgenv().SelectWeapon)
-                                            PosMon = v.HumanoidRootPart.CFrame
-                                            topos(v.HumanoidRootPart.CFrame * Pos)
-                                            v.HumanoidRootPart.CanCollide = false
-                                            v.Humanoid.WalkSpeed = 0
-                                            v.Head.CanCollide = false
-                                            getgenv().StartMagnet = true
-                                            sethiddenproperty(player, "SimulationRadius", math.huge)
-                                        until not getgenv().AutoFarm or v.Humanoid.Health <= 0 or not v.Parent or not game:GetService("Players").LocalPlayer.PlayerGui.Main.Quest.Visible
-                                    else
-                                        getgenv().StartMagnet = false
-                                        game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("AbandonQuest")
-                                    end
-                                end
+                            -- CORREÇÃO 1: Usando string.find para uma busca flexível do nome
+                            if v:FindFirstChild("HumanoidRootPart") and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 and string.find(v.Name, Mon) then
+                                targetMob = v
+                                break -- Encontrou um alvo, pode parar de procurar
                             end
                         end
+
+                        if targetMob then -- Se encontrou um monstro vivo
+                            if string.find(game:GetService("Players").LocalPlayer.PlayerGui.Main.Quest.Container.QuestTitle.Title.Text, NameMon) then
+                                repeat
+                                    task.wait(0.1)
+                                    AutoHaki()
+                                    EquipWeapon(getgenv().SelectWeapon)
+                                    PosMon = targetMob.HumanoidRootPart.CFrame
+                                    topos(targetMob.HumanoidRootPart.CFrame * Pos) -- Move para o monstro
+                                    targetMob.HumanoidRootPart.CanCollide = false
+                                    targetMob.Humanoid.WalkSpeed = 0
+                                    targetMob.Head.CanCollide = false
+                                    getgenv().StartMagnet = true
+                                    sethiddenproperty(player, "SimulationRadius", math.huge)
+                                until not getgenv().AutoFarm or targetMob.Humanoid.Health <= 0 or not targetMob.Parent or not game:GetService("Players").LocalPlayer.PlayerGui.Main.Quest.Visible
+                            else
+                                getgenv().StartMagnet = false
+                                game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("AbandonQuest")
+                            end
+                        else -- CORREÇÃO 2: Se NENHUM monstro foi encontrado
+                            getgenv().StartMagnet = false
+                            -- Move o jogador para a área de spawn dos monstros para esperar
+                            if CFrameMon then
+                                topos(CFrameMon)
+                            end
+                            task.wait(1) -- Espera um pouco antes de procurar de novo
+                        end
                     end
-                end)
-                task.wait(0.5)
-                canRun = true
-            end
-        end
-    end
-end)
 local Bone = {
     ["Reborn Skeleton"] = CFrame.new(-8769.58984, 142.13063, 6055.27637),
     ["Living Zombie"] = CFrame.new(-10156.4531, 138.652481, 5964.5752),
