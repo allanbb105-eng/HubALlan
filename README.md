@@ -117,6 +117,7 @@ end
 
 ffunction CheckQuest()
     MyLevel = game.Players.LocalPlayer.Data.Level.Value
+     if World1 then
         if MyLevel <= 9 then
             NameMon = "Bandit"
             LevelQuest = 1
