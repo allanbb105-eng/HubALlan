@@ -1330,8 +1330,8 @@ end
 print("--[[Loaded UI]]--")
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 Window = Fluent:CreateWindow({
-    Title = "Island Hub-Blox Fruit",
-    SubTitle = "by mini hell",
+    Title = "Allan Hub",
+    SubTitle = "by Allan Corp",
     TabWidth = 155,
     Size = UDim2.fromOffset(555, 320),
     Acrylic = false, 
@@ -3125,6 +3125,16 @@ spawn(function()
                     end
                 elseif game:GetService("Players").LocalPlayer.PlayerGui.Main.Quest.Visible == true then
                     CheckQuest()
+print("CFrameMon:", CFrameMon)
+elseif game:GetService("Players").LocalPlayer.PlayerGui.Main.Quest.Visible == true then
+    CheckQuest()
+    if CFrameMon then
+        print("Teleportando para inimigo:", Mon, "em", CFrameMon.Position)
+        topos(CFrameMon)
+    else
+        warn("CFrameMon está vazio, verifique CheckQuest().")
+    end
+
                     if game:GetService("Workspace").Enemies:FindFirstChild(Mon) then
                         for i, v in pairs(game:GetService("Workspace").Enemies:GetChildren()) do
                             if v:FindFirstChild("HumanoidRootPart") and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 then
@@ -8111,7 +8121,7 @@ local notificationCooldown = 10
 local currentTime = tick()
 if currentTime - lastNotificationTime >= notificationCooldown then
     game.StarterGui:SetCore("SendNotification", {
-        Title = "island hub",
+        Title = "Allan Hub",
         Text = "Successfully",
         Duration = 1
     })
