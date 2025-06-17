@@ -21,7 +21,7 @@ Toggle.MouseButton1Click:Connect(function()
     Toggle.Text = _G.AutoFarm and "Desativar Allan Hub" or "Ativar Allan Hub"
 end)
 
--- Configuração inicial
+-- Configurações
 _G.Weapon = "Combat"
 
 function TP(pos)
@@ -43,7 +43,6 @@ function SimulateClick()
     vim:SendMouseButtonEvent(0, 0, 0, false, game, 0)
 end
 
--- Função Attack turbinada
 function Attack()
     local success, err = pcall(function()
         local Combat = require(game.Players.LocalPlayer.PlayerScripts.CombatFramework)
@@ -51,7 +50,7 @@ function Attack()
         if controller and controller.equipped then
             local blade = controller.blades[1]
             if blade then
-                for i = 1, 3 do -- Aumente esse número pra mais golpes
+                for i = 1, 3 do
                     controller:attack()
                     wait(0.05)
                 end
@@ -60,9 +59,7 @@ function Attack()
             SimulateClick()
         end
     end)
-    if not success then
-        SimulateClick()
-    end
+    if not success then SimulateClick() end
 end
 
 function FindMob(name)
@@ -74,13 +71,34 @@ function FindMob(name)
     end
 end
 
+function StickToMob(target)
+    local char = game.Players.LocalPlayer.Character
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    if not (hrp and target) then return end
+
+    local bodyPos = hrp:FindFirstChild("AllanStick") or Instance.new("BodyPosition")
+    bodyPos.Name = "AllanStick"
+    bodyPos.MaxForce = Vector3.new(1e5, 1e5, 1e5)
+    bodyPos.Position = target.Position + Vector3.new(0, 0.8, 0)
+    bodyPos.P = 5000
+    bodyPos.D = 500
+    bodyPos.Parent = hrp
+end
+
+function ClearStick()
+    local hrp = game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if hrp then
+        local stick = hrp:FindFirstChild("AllanStick")
+        if stick then stick:Destroy() end
+    end
+end
+
 function CheckQuest()
     local level = game.Players.LocalPlayer.Data.Level.Value
     local placeId = game.PlaceId
     local Worlds = {
         [2753915549] = {
             {Level = 1, Mob = "Bandit", Quest = "BanditQuest1", QuestLevel = 1, CFrameQuest = CFrame.new(1059, 16, 1544), CFrameMon = CFrame.new(1046, 27, 1561)},
-            -- Adicione mais estágios conforme necessário
         },
         [4442272183] = {
             {Level = 700, Mob = "Raider", Quest = "Area1Quest", QuestLevel = 1, CFrameQuest = CFrame.new(-429, 71, 1836), CFrameMon = CFrame.new(-728, 52, 2345)},
@@ -112,6 +130,7 @@ spawn(function()
             pcall(function()
                 CheckQuest()
                 if not game.Players.LocalPlayer.PlayerGui.Main.Quest.Visible then
+                    ClearStick()
                     TP(CFrameQuest)
                     wait(1)
                     game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("StartQuest", NameQuest, LevelQuest)
@@ -119,10 +138,14 @@ spawn(function()
                     local mob = FindMob(NameMon)
                     if mob then
                         EquipWeapon(_G.Weapon)
-                        TP(mob.HumanoidRootPart.CFrame * CFrame.new(0, 0.8, 0)) -- mais colado no mob
+                        StickToMob(mob.HumanoidRootPart)
                         wait(0.2)
                         Attack()
+                        if mob.Humanoid.Health <= 0 then
+                            ClearStick()
+                        end
                     else
+                        ClearStick()
                         TP(CFrameMon)
                         wait(1)
                     end
