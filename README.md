@@ -22,8 +22,8 @@ ModeToggle.TextSize = 18
 ModeToggle.TextColor3 = Color3.new(1, 1, 1)
 
 -- Variáveis de controle
-_G.AutoFarm = false
-_G.UseTeleport = false
+_G.AutoFarm = true
+_G.UseTeleport = true
 _G.Weapon = "Combat"
 _G.AutoFruit = true
 
