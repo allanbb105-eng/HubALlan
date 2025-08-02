@@ -1,10 +1,10 @@
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 
--- Coordenadas personalizadas
+-- Coordenadas personalizadas (usando CFrame corretamente)
 local teleportPoints = {
-    Vector3.new(-1463.15393, 22.4496212, 5672.29102, 1, 0, 0, 0, 1, 0, 0, 0, 1),     -- Ponto 1
-    Vector3.new(-2022.13855, 30.5247879, 5564.81445, 1, 0, 0, 0, 1, 0, 0, 0, 1)    -- Ponto 2
+    CFrame.new(-1463.15393, 22.4496212, 5672.29102), -- Ponto 1
+    CFrame.new(-2022.13855, 30.5247879, 5564.81445)  -- Ponto 2
 }
 
 -- Referências à interface
@@ -49,7 +49,7 @@ button.MouseButton1Click:Connect(function()
     -- Tenta obter o HumanoidRootPart
     local humanoidRootPart = getHumanoidRootPart()
     if humanoidRootPart then
-        humanoidRootPart.CFrame = CFrame.new(teleportPoints[currentIndex])
+        humanoidRootPart.CFrame = teleportPoints[currentIndex]
         showTeleportMessage(currentIndex)
     else
         warn("Não foi possível encontrar o HumanoidRootPart do personagem.")
